@@ -1,0 +1,15 @@
+# OSX
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# PyCharm
+.idea
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Folders
+notebooks/
