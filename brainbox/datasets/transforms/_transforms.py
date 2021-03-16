@@ -63,3 +63,28 @@ class ClipResize:
     # TODO
     pass
 
+
+class ImgToClip:
+
+    def __init__(self, pre_blanks, repeats, post_blanks):
+        self.pre_blanks = pre_blanks
+        self.repeats = repeats
+        self.post_blanks = post_blanks
+
+    def __call__(self, img):
+        # img: channel x height x width
+        # output: channel x time x height x width
+        assert len(img.shape) == 3
+        channel = img.shape[0]
+        height = img.shape[1]
+        width = img.shape[2]
+
+        clip = torch.zeros((channel, self.pre_blanks + self.repeats + self.post_blanks, height, width))
+        clip[:, self.pre_blanks:self.pre_blanks + self.repeats] = img
+
+        return clip
+
+    @property
+    def hyperparams(self):
+        return {'img_to_clip': {'pre_blanks': self.pre_blanks, 'repeats': self.repeats, 'post_blanks': self.post_blanks}}
+

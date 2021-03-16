@@ -269,7 +269,10 @@ def load_model(root, model_id=None, index=None, **kwargs):
 
     model_path = os.path.join(root, '{0}_model.pt'.format(model_id))
 
-    return torch.load(model_path)
+    model = torch.load(model_path)
+    model.eval()
+
+    return model
 
 
 def load_model_log(root, model_id=None, index=None, **kwargs):
