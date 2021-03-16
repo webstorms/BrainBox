@@ -256,27 +256,33 @@ def query_model_ids(root, **kwargs):
     return all_model_hyperparam[query]
 
 
-def load_model(root, index=None, **kwargs):
-    model_ids = query_model_ids(root, **kwargs)
+def load_model(root, model_id=None, index=None, **kwargs):
 
-    if index is None:
-        assert len(model_ids) == 1, 'Multiple models match the query criteria'
+    if model_id is None:
+        model_ids = query_model_ids(root, **kwargs)
 
-    index = 0 if index is None else index
-    model_id = model_ids.index[index]
+        if index is None:
+            assert len(model_ids) == 1, 'Multiple models match the query criteria'
+
+        index = 0 if index is None else index
+        model_id = model_ids.index[index]
+
     model_path = os.path.join(root, '{0}_model.pt'.format(model_id))
 
     return torch.load(model_path)
 
 
-def load_model_log(root, index=None, **kwargs):
-    model_ids = query_model_ids(root, **kwargs)
+def load_model_log(root, model_id=None, index=None, **kwargs):
 
-    if index is None:
-        assert len(model_ids) == 1, 'Multiple models match the query criteria'
+    if model_id is None:
+        model_ids = query_model_ids(root, **kwargs)
 
-    index = 0 if index is None else index
-    model_id = model_ids.index[index]
+        if index is None:
+            assert len(model_ids) == 1, 'Multiple models match the query criteria'
+
+        index = 0 if index is None else index
+        model_id = model_ids.index[index]
+
     model_log_path = os.path.join(root, '{0}_log.csv'.format(model_id))
 
     return pd.read_csv(model_log_path)
