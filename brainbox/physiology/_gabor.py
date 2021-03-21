@@ -21,7 +21,7 @@ class GaborFitter:
     def __init__(self, root, name, rfs, spatial_locations=None, sigmas=None, thetas=None, phis=None, frequencies=None, n_spectral_itr=800, n_spatial_itr=1200, spectral_lr=0.01, spatial_lr=0.002):
         self.root = root
         self.name = name
-        self.rfs = rfs
+        self.rfs = rfs.cpu()
         rf_size = rfs[0].shape[0]
 
         self.spatial_locations = [(rf_size // 2, rf_size // 2)] if spatial_locations is None else spatial_locations
@@ -71,12 +71,11 @@ class SingleGaborFitter(nn.Module):
         self.n_spatial_itr = n_spatial_itr
         self.spectral_lr = spectral_lr
         self.spatial_lr = spatial_lr
-        self.device = 'cpu'
 
         self.rf_size = rf.shape[0]
         self.x0_inits, self.y0_inits, self.sigmax_inits, self.sigmay_inits, self.theta_inits, self.phi_inits, self.frequency_inits \
             = SingleGaborFitter.build_initial_params(spatial_locations, sigmas, thetas, phis, frequencies)
-        self.rf = rf.unsqueeze(0).repeat(self.n_units, 1, 1)
+        self.rf = rf.cpu().unsqueeze(0).repeat(self.n_units, 1, 1)
 
         self.spectral_gabor_model = None
         self.spatial_gabor_model = None
@@ -171,7 +170,6 @@ class SingleGaborFitter(nn.Module):
     def _fit_gabor_model(self, gabor_model, n_iterations, lr, spectral):
         target = SingleGaborFitter.to_normalised(self.rf)
         target = SingleGaborFitter.to_spectral(target) if spectral else target
-        target = target.to(self.device)
 
         for iteration in range(n_iterations):
             prediction = gabor_model()
