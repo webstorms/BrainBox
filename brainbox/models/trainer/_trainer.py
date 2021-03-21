@@ -138,6 +138,10 @@ class DecayTrainer(Trainer):
         self.decay_steps_counter = 0
         self._lr = 10 ** lr
 
+    @property
+    def hyperparams(self):
+        return {**super().hyperparams, 'lr_decay': self.lr_decay, 'max_train_steps': self.max_train_steps, 'max_decay_steps': self.max_decay_steps}
+
     def save_hyperparams(self):
         train_dataset_hyperparams = Trainer._append_prefix_to_hyperparams('train_dataset', self.train_dataset.hyperparams)
         val_dataset_hyperparams = Trainer._append_prefix_to_hyperparams('val_dataset', self.val_dataset.hyperparams)

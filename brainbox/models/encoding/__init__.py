@@ -1,3 +1,3 @@
-from ._encoding import LinearModel, LNModel
+from ._encoding import SpatioTemporalLinearModel, SpatioTemporalLNModel, SpatialLinearModel, SpatialLNModel
 
-__all__ = ['LinearModel', 'LNModel']
+# __all__ = ['LinearModel', 'LNModel']

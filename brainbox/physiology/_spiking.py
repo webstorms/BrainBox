@@ -16,7 +16,7 @@ def get_isi_distributions(model, bin_dt, dataset, batch_size, max_batch=None):
     """
 
     def process_batch(model_output):
-        # model_output: n_batch x n_neurons x n_timesteps
+        # model_output: n_neurons x n_timesteps
         n_neurons = model_output.shape[0]
         n_timesteps = model_output.shape[1]
         indices = np.arange(n_neurons)
@@ -91,6 +91,62 @@ def get_isi_cvs(isi_distributions, thresh_n):
             isi_cvs.append(0)
 
     return np.array(isi_cvs)
+
+
+def get_firing_rate_distributions(model, bin_dt, dataset, batch_size, max_batch=None):
+
+    # TODO: Documentation
+
+    def process_batch(model_output):
+        # model_output: n_neurons x n_timesteps
+        firing_rates = model_output.mean(dim=-1)
+
+        for i in range(len(firing_rates)):
+            results[i].append(firing_rates[i].item() * (1000 / bin_dt))
+
+    results = None
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size)
+
+    with torch.no_grad():
+        for batch_id, (data, _) in enumerate(data_loader):
+            model_output = model(data)
+            assert len(
+                model_output.shape) == 3, 'Model output should be of dimensions n_batch x n_neurons x n_timesteps'
+
+            n_batch = model_output.shape[0]
+            n_neurons = model_output.shape[1]
+
+            if results is None:
+                results = [[] for _ in range(n_neurons)]
+
+            for sample_id in range(n_batch):
+                print('Processing batch... {0}.{1}/{2}.{3}'.format(batch_id, sample_id, len(data_loader), n_batch))
+                process_batch(model_output[sample_id, :, :])
+
+            # Stop sampling isis if we have reached the target number batches to compute over
+            if max_batch is not None and max_batch == (batch_id + 1):
+                break
+
+    # Convert isis to numpy arrays
+    n_neurons = len(results)
+    for i in range(n_neurons):
+        results[i] = np.array(results[i])
+
+    return results
+
+
+def get_mean_firing_rates(firing_rate_distributions):
+
+    n_neurons = len(firing_rate_distributions)
+    mean_firing_rates = []
+
+    for i in range(n_neurons):
+        neuron_firing_rates = firing_rate_distributions[i]
+
+        mean_firing_rates.append(neuron_firing_rates.mean())
+
+    return np.array(mean_firing_rates)
+
 
 # TODO: Get firing rate distribution
 # TODO: Get isi distribution

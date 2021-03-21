@@ -3,7 +3,7 @@ import torch
 
 class BBDataset(torch.utils.data.Dataset):
 
-    def __init__(self, transform, target_transform):
+    def __init__(self, transform=None, target_transform=None):
         self.transform = transform
         self.target_transform = target_transform
 
@@ -24,3 +24,45 @@ class BBDataset(torch.utils.data.Dataset):
             hyperparams = {**hyperparams, **target_transform_hyperparams}
 
         return hyperparams
+
+
+class TemporalDataset(BBDataset):
+
+    def __init__(self, t_len, dt, transform=None, target_transform=None):
+        super().__init__(transform, target_transform)
+        self.t_len = t_len
+        self.dt = dt
+
+        self.ids = []
+        for clip_id in range(self.n_clips):
+            t_id = 0
+            while t_id + t_len <= self.n_timesteps:
+                self.ids.append((clip_id, t_id))
+                t_id += dt
+
+    @property
+    def hyperparams(self):
+        return {**super().hyperparams, 't_len': self.t_len, 'dt': self.dt}
+
+    @property
+    def n_clips(self):
+        # channel x timesteps x ...
+        raise NotImplementedError
+
+    @property
+    def n_timesteps(self):
+        raise NotImplementedError
+
+    def load_clip(self, i):
+        raise NotImplementedError
+
+    def __getitem__(self, i):
+        i, t = self.ids[i]
+        x, y = self.load_clip(i)
+        x = x[:, t:t + self.t_len]
+        y = y[:, t:t + self.t_len]
+
+        return x, y
+
+    def __len__(self):
+        return len(self.ids)

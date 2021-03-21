@@ -3,27 +3,29 @@ import torch.nn as nn
 from .._model import BBModel
 
 
-class LinearModel(BBModel):
+class SpatioTemporalLinearModel(BBModel):
 
     def __init__(self, rf_len, in_channels, n_neurons, width, height, bias=False):
         super().__init__()
         self.rf_len = rf_len
         self.in_channels = in_channels
+        self.n_neurons = n_neurons
         self.width = width
         self.height = height
+        self.bias = bias
         self.model = nn.Conv3d(in_channels, n_neurons, (rf_len, self.height, self.width), bias=bias)
 
     @property
     def hyperparams(self):
-        return {**super().hyperparams, 'rf_len': self.rf_len, 'in_channels': self.in_channels, 'width': self.width,
-                'height': self.height}
+        return {**super().hyperparams, 'rf_len': self.rf_len, 'in_channels': self.in_channels, 'n_neurons': self.n_neurons,
+                'width': self.width, 'height': self.height, 'bias': self.bias}
 
     def forward(self, x):
         # x: batch x c x t x h x w
         return self.model(x)[..., 0, 0]
 
 
-class LNModel(LinearModel):
+class SpatioTemporalLNModel(SpatioTemporalLinearModel):
 
     def __init__(self, nonlinearity, rf_len, in_channels, n_neurons, width, height, bias=False):
         super().__init__(rf_len, in_channels, n_neurons, width, height, bias)
@@ -36,3 +38,40 @@ class LNModel(LinearModel):
     def forward(self, x):
         # x: batch x c x t x h x w
         return self.nonlinearity(self.model(x)[..., 0, 0])
+
+
+class SpatialLinearModel(BBModel):
+
+    def __init__(self, in_channels, n_neurons, width, height, bias=False):
+        super().__init__()
+        self.in_channels = in_channels
+        self.n_neurons = n_neurons
+        self.width = width
+        self.height = height
+        self.bias = bias
+        self.model = nn.Conv2d(in_channels, n_neurons, (self.height, self.width), bias=bias)
+
+    @property
+    def hyperparams(self):
+        return {**super().hyperparams, 'in_channels': self.in_channels, 'n_neurons': self.n_neurons,
+                'width': self.width, 'height': self.height, 'bias': self.bias}
+
+    def forward(self, x):
+        # x: batch x c x h x w
+        return self.model(x)[..., 0, 0]
+
+
+class SpatialLNModel(SpatialLinearModel):
+
+    def __init__(self, nonlinearity, in_channels, n_neurons, width, height, bias=False):
+        super().__init__(in_channels, n_neurons, width, height, bias)
+        self.nonlinearity = nonlinearity
+
+    @property
+    def hyperparams(self):
+        return {**super().hyperparams, 'nonlinearity': self.nonlinearity.__name__}
+
+    def forward(self, x):
+        # x: batch x c x h x w
+        return self.model(x)[..., 0, 0]
+

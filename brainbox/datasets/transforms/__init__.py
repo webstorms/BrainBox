@@ -1,4 +1,4 @@
-from ._transforms import Compose, ClipNormalize, ClipGrayscale, ClipResize
+from ._transforms import Compose, ClipNormalize, ClipGrayscale, ClipResize, ImgToClip
 
-__all__ = ['Compose', 'ClipNormalize', 'ClipGrayscale', 'ClipResize']
+__all__ = ['Compose', 'ClipNormalize', 'ClipGrayscale', 'ClipResize', 'ImgToClip']
 

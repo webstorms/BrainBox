@@ -5,6 +5,8 @@ import torch
 from ._dataset import BBDataset
 
 
+# TODO: Better tensor dim config for neural responses
+
 class PVC1Dataset(BBDataset):
 
     N_NEURONS_TRIAL_SINGLE = 96
