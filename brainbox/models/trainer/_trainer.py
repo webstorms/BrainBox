@@ -80,14 +80,17 @@ class Trainer:
     def loss(self, output, target, model):
         raise NotImplementedError
 
-    def on_epoch_complete(self):
-        self.save_model_log()
+    def on_epoch_complete(self, save):
+        if save:
+            self.save_model_log()
 
-    def on_training_start(self):
-        self.save_hyperparams()
+    def on_training_start(self, save):
+        if save:
+            self.save_hyperparams()
 
-    def on_training_complete(self):
-        self.save_model()
+    def on_training_complete(self, save):
+        if save:
+            self.save_model()
 
     def train_for_single_epoch(self):
 
@@ -106,9 +109,9 @@ class Trainer:
 
         return epoch_loss
 
-    def train(self):
+    def train(self, save=True):
 
-        self.on_training_start()
+        self.on_training_start(save)
 
         for epoch in range(self.n_epochs):
             print('Starting epoch {0}...'.format(epoch))
@@ -117,9 +120,9 @@ class Trainer:
 
             self.log['train_loss'].append(epoch_loss)
 
-            self.on_epoch_complete()
+            self.on_epoch_complete(save)
 
-        self.on_training_complete()
+        self.on_training_complete(save)
 
 
 class DecayTrainer(Trainer):
@@ -152,11 +155,12 @@ class DecayTrainer(Trainer):
         hyperparams = pd.Series(hyperparams)
         hyperparams.to_csv(self.model_hyperparams_path, index=True)
 
-    def on_epoch_complete(self):
+    def on_epoch_complete(self, save):
 
         val_loss = self.get_total_val_loss()
         self.log['val_loss'].append(val_loss)
-        self.save_model_log()
+        if save:
+            self.save_model_log()
 
         print('Train loss', self.log['train_loss'][-1])
         print('Val loss', self.log['val_loss'][-1])
@@ -165,7 +169,8 @@ class DecayTrainer(Trainer):
             self.min_val_loss = val_loss
             self.train_steps_counter = 0
 
-            self.save_model()
+            if save:
+                self.save_model()
 
         else:
             self.train_steps_counter += 1
@@ -181,14 +186,16 @@ class DecayTrainer(Trainer):
                 self._lr *= self.lr_decay
 
                 # Load the best model and re-instantiated the optimizer
-                self.model = torch.load(self.model_path)
+                if save:
+                    self.model = torch.load(self.model_path)
                 self.optimizer = torch.optim.Adam(self.model.parameters(), self._lr)
 
-    def on_training_start(self):
-        self.save_model()
-        self.save_hyperparams()
+    def on_training_start(self, save):
+        if save:
+            self.save_model()
+            self.save_hyperparams()
 
-    def on_training_complete(self):
+    def on_training_complete(self, save):
         pass
 
     def get_total_val_loss(self):
@@ -208,9 +215,9 @@ class DecayTrainer(Trainer):
 
         return total_loss
 
-    def train(self):
+    def train(self, save=False):
 
-        self.on_training_start()
+        self.on_training_start(save)
 
         for epoch in range(self.n_epochs):
             print('Starting epoch {0}...'.format(epoch))
@@ -219,14 +226,14 @@ class DecayTrainer(Trainer):
 
             self.log['train_loss'].append(epoch_loss)
 
-            self.on_epoch_complete()
+            self.on_epoch_complete(save)
 
             # Halt the training process if we have reached the maximum number of lr decay steps
             if self.decay_steps_counter > self.max_decay_steps:
                 print('Training stopped.')
                 return
 
-        self.on_training_complete()
+        self.on_training_complete(save)
 
 
 def get_trainer(trainer_class, loss_function, *args):
