@@ -28,39 +28,36 @@ class BBDataset(torch.utils.data.Dataset):
 
 class TemporalDataset(BBDataset):
 
-    def __init__(self, t_len, dt, transform=None, target_transform=None):
+    def __init__(self, t_len, dt, n_clips, n_timesteps, transform=None, target_transform=None):
         super().__init__(transform, target_transform)
         self.t_len = t_len
         self.dt = dt
 
         self.ids = []
-        for clip_id in range(self.n_clips):
-            t_id = 0
-            while t_id + t_len <= self.n_timesteps:
+        for clip_id in range(n_clips):
+            for t_id in range(0, n_timesteps - t_len + 1, dt):
                 self.ids.append((clip_id, t_id))
-                t_id += dt
 
     @property
     def hyperparams(self):
         return {**super().hyperparams, 't_len': self.t_len, 'dt': self.dt}
 
-    @property
-    def n_clips(self):
-        # channel x timesteps x ...
-        raise NotImplementedError
-
-    @property
-    def n_timesteps(self):
-        raise NotImplementedError
-
     def load_clip(self, i):
+        # x: channel x timesteps x ...
+        # y: channel x timesteps x ...
         raise NotImplementedError
 
     def __getitem__(self, i):
-        i, t = self.ids[i]
-        x, y = self.load_clip(i)
-        x = x[:, t:t + self.t_len]
-        y = y[:, t:t + self.t_len]
+        clip_idx, t_idx = self.ids[i]
+        x, y = self.load_clip(clip_idx)
+        x = x[:, t_idx:t_idx + self.t_len]
+        y = y[:, t_idx:t_idx + self.t_len]
+
+        if self.transform is not None:
+            x = self.transform(x)
+
+        if self.target_transform is not None:
+            y = self.target_transform(y)
 
         return x, y
 

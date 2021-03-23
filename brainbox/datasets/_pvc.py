@@ -5,7 +5,7 @@ import torch
 from ._dataset import BBDataset
 
 
-# TODO: Better tensor dim config for neural responses
+# TODO Ensure response tensor is of shape b x 1 x t x n_neurons
 
 class PVC1Dataset(BBDataset):
 

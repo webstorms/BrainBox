@@ -1,4 +1,6 @@
 import torch
+import torch.nn.functional as F
+import numpy as np
 
 
 class Compose:
@@ -56,6 +58,30 @@ class ClipGrayscale:
     @property
     def hyperparams(self):
         return {'clip_grayscale': {}}
+
+
+class GaussianKernel:
+
+    def __init__(self, sigma, width):
+        assert width % 2 == 1, 'width needs to be an odd number'
+        self.sigma = sigma
+        self.width = width
+
+        kernel = [(1 / ((np.sqrt(2 * np.pi) * sigma)) * np.exp(-x ** 2 / (2 * sigma ** 2))) for x in
+                  np.arange(-width // 2 + 1, width // 2 + 1, 1)]
+        self.kernel = torch.Tensor(kernel).view(1, 1, width, 1)
+
+    def __call__(self, x):
+        # x: channel x time x n_neurons
+        x = x.unsqueeze(0)  # add batch dimension
+        x = F.pad(x, (0, 0, self.width // 2, self.width // 2))
+        x = F.conv2d(x, self.kernel)
+
+        return x[0]
+
+    @property
+    def hyperparams(self):
+        return {'gaussian_kernel': {'sigma': self.sigma, 'width': self.width}}
 
 
 class ClipResize:

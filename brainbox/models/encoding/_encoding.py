@@ -22,7 +22,15 @@ class SpatioTemporalLinearModel(BBModel):
 
     def forward(self, x):
         # x: batch x c x t x h x w
-        return self.model(x)[..., 0, 0]
+        x = self.model(x)
+        n_batch, n_chanel, n_timesteps, h, w = x.shape
+        assert h == 1 and w == 1, 'Spatial dimensions too large.'
+
+        # ensure output is of shape b x 1 x t x n_neurons
+        x = x.view(n_batch, n_chanel, n_timesteps, 1)
+        x = x.permute(0, 3, 2, 1)
+
+        return x
 
 
 class SpatioTemporalLNModel(SpatioTemporalLinearModel):
@@ -37,7 +45,9 @@ class SpatioTemporalLNModel(SpatioTemporalLinearModel):
 
     def forward(self, x):
         # x: batch x c x t x h x w
-        return self.nonlinearity(self.model(x)[..., 0, 0])
+        x = super(SpatioTemporalLNModel, self).forward(x)
+
+        return self.nonlinearity(x)
 
 
 class SpatialLinearModel(BBModel):
@@ -58,7 +68,15 @@ class SpatialLinearModel(BBModel):
 
     def forward(self, x):
         # x: batch x c x h x w
-        return self.model(x)[..., 0, 0]
+        x = self.model(x)
+        n_batch, n_chanel, h, w = x.shape
+        assert h == 1 and w == 1, 'Spatial dimensions too large.'
+
+        # ensure output is of shape b x 1 x n_neurons
+        x = x.view(n_batch, n_chanel, 1)
+        x = x.permute(0, 2, 1)
+
+        return x
 
 
 class SpatialLNModel(SpatialLinearModel):
@@ -73,5 +91,7 @@ class SpatialLNModel(SpatialLinearModel):
 
     def forward(self, x):
         # x: batch x c x h x w
-        return self.model(x)[..., 0, 0]
+        x = super(SpatialLNModel, self).forward(x)
+
+        return self.nonlinearity(x)
 
