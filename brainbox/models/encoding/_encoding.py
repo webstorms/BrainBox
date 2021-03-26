@@ -13,7 +13,7 @@ class SpatioTemporalLinearModel(BBModel):
         self.width = width
         self.height = height
         self.bias = bias
-        self.model = nn.Conv3d(in_channels, n_neurons, (rf_len, self.height, self.width), bias=bias)
+        self.conv = nn.Conv3d(in_channels, n_neurons, (rf_len, self.height, self.width), bias=bias)
 
     @property
     def hyperparams(self):
@@ -22,7 +22,7 @@ class SpatioTemporalLinearModel(BBModel):
 
     def forward(self, x):
         # x: batch x c x t x h x w
-        x = self.model(x)
+        x = self.conv(x)
         n_batch, n_chanel, n_timesteps, h, w = x.shape
         assert h == 1 and w == 1, 'Spatial dimensions too large.'
 
@@ -35,19 +35,19 @@ class SpatioTemporalLinearModel(BBModel):
 
 class SpatioTemporalLNModel(SpatioTemporalLinearModel):
 
-    def __init__(self, nonlinearity, rf_len, in_channels, n_neurons, width, height, bias=False):
+    def __init__(self, non_linearity, rf_len, in_channels, n_neurons, width, height, bias=False):
         super().__init__(rf_len, in_channels, n_neurons, width, height, bias)
-        self.nonlinearity = nonlinearity
+        self.non_linearity = non_linearity
 
     @property
     def hyperparams(self):
-        return {**super().hyperparams, 'nonlinearity': self.nonlinearity.__name__}
+        return {**super().hyperparams, 'non_linearity': self.non_linearity.__name__}
 
     def forward(self, x):
         # x: batch x c x t x h x w
         x = super(SpatioTemporalLNModel, self).forward(x)
 
-        return self.nonlinearity(x)
+        return self.non_linearity(x)
 
 
 class SpatialLinearModel(BBModel):
@@ -59,7 +59,7 @@ class SpatialLinearModel(BBModel):
         self.width = width
         self.height = height
         self.bias = bias
-        self.model = nn.Conv2d(in_channels, n_neurons, (self.height, self.width), bias=bias)
+        self.conv = nn.Conv2d(in_channels, n_neurons, (self.height, self.width), bias=bias)
 
     @property
     def hyperparams(self):
@@ -68,7 +68,7 @@ class SpatialLinearModel(BBModel):
 
     def forward(self, x):
         # x: batch x c x h x w
-        x = self.model(x)
+        x = self.conv(x)
         n_batch, n_chanel, h, w = x.shape
         assert h == 1 and w == 1, 'Spatial dimensions too large.'
 
@@ -81,17 +81,17 @@ class SpatialLinearModel(BBModel):
 
 class SpatialLNModel(SpatialLinearModel):
 
-    def __init__(self, nonlinearity, in_channels, n_neurons, width, height, bias=False):
+    def __init__(self, non_linearity, in_channels, n_neurons, width, height, bias=False):
         super().__init__(in_channels, n_neurons, width, height, bias)
-        self.nonlinearity = nonlinearity
+        self.non_linearity = non_linearity
 
     @property
     def hyperparams(self):
-        return {**super().hyperparams, 'nonlinearity': self.nonlinearity.__name__}
+        return {**super().hyperparams, 'non_linearity': self.non_linearity.__name__}
 
     def forward(self, x):
         # x: batch x c x h x w
         x = super(SpatialLNModel, self).forward(x)
 
-        return self.nonlinearity(x)
+        return self.non_linearity(x)
 

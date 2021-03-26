@@ -374,6 +374,8 @@ def main():
     parser.add_argument('--scale', type=float, default=0.4, metavar='N', help='rescale the crcns-build_ringach-data images by scaling factor (default: 0.5)')
     args = parser.parse_args()
 
+    os.makedirs(os.path.join(args.path, 'processed'), exist_ok=True)
+
     # 1. Build movies
     movies_src_path = os.path.join(args.path, 'crcns-ringach-data')
     movies_dst_path = os.path.join(args.path, 'processed', 'movies.pt')

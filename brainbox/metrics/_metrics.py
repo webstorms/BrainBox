@@ -19,7 +19,7 @@ def cc(output, target):
 
 def cc_norm(output, target):
     # output: b x 1 x t x n
-    # target: b x r x t x n
+    # target: b x n x t x n
     # returns: b x 1 x n
     n = target.shape[1]
     tp = (n - 1) * target.var(dim=2).sum(dim=1)
