@@ -445,7 +445,7 @@ def get_gabors(root, name, spatiotemporal_rfs, min_cc=0.7, min_env=0.5, separabi
     validated_params_df = gabor_validator.validate()
 
     validated_index = validated_params_df.index.values
-
+    
     return validated_params_df, gabor_validator.build_gabors()[validated_index].detach(), gabor_validator.spatial_rfs[validated_index].detach(), spatiotemporal_rfs[validated_index].detach()
 
 
