@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 
 def get_highest_power_spatial_rf(spatiotemporal_rf):
@@ -52,4 +53,30 @@ def get_temporal_power_profile(spatiotemporal_rfs):
     power_profile = power_profile / power_profile.sum()
 
     return power_profile
+
+
+def estimate_rfs(model, rf_len, rf_h, rf_w, t_len, noise_var=10, samples=10, batch_size=2000, device='cuda'):
+
+    model_rfs = 0
+
+    for i in range(samples // batch_size):
+        print('Processing batch_id {0} out of {1}...'.format(i, samples // batch_size))
+        noise = torch.normal(0, noise_var, (min(batch_size, samples - i * batch_size), t_len, rf_h, rf_w)).to(device)
+        model_output = model(noise)
+
+        off = noise.shape[1] - model_output.shape[2]
+        model_output = F.pad(model_output, (off, 0))
+        count = 0
+
+        for t in range(rf_len - 1, t_len):
+            _noise = noise[:, t - rf_len + 1:t + 1]
+            _model_output = model_output[:, :, t]
+            batch_model_rfs = torch.einsum('bthw, bn->bnthw', _noise, _model_output)
+            count += batch_model_rfs.shape[0]
+            model_rfs += batch_model_rfs.sum(dim=0)
+
+    model_rfs = model_rfs / count
+    model_rfs = model_rfs.detach().cpu()
+
+    return model_rfs
 
