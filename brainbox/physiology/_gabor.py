@@ -118,7 +118,7 @@ class SingleGaborFitter(nn.Module):
 
     @staticmethod
     def to_normalised(rf):
-        return rf / torch.clamp(rf.abs().amax((1, 2)).view(-1, 1, 1), min=1e-5, max=1)
+        return rf / torch.clamp(rf.abs().amax((1, 2)).view(-1, 1, 1), min=1e-5, max=np.inf)
 
     def get_best_fit(self):
         predicted_rfs = self.spatial_gabor_model()
@@ -169,12 +169,12 @@ class SingleGaborFitter(nn.Module):
 
     def _fit_gabor_model(self, gabor_model, n_iterations, lr, spectral):
         target = SingleGaborFitter.to_normalised(self.rf)
-        target = SingleGaborFitter.to_spectral(target) if spectral else target
+        target = SingleGaborFitter.to_normalised(SingleGaborFitter.to_spectral(target)) if spectral else target
 
         for iteration in range(n_iterations):
             prediction = gabor_model()
             prediction = SingleGaborFitter.to_normalised(prediction)
-            prediction = SingleGaborFitter.to_spectral(prediction) if spectral else prediction
+            prediction = SingleGaborFitter.to_normalised(SingleGaborFitter.to_spectral(prediction)) if spectral else prediction
 
             optimizer = torch.optim.Adam(gabor_model.parameters(), lr)
 
