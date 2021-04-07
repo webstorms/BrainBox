@@ -30,6 +30,8 @@ class TemporalDataset(BBDataset):
 
     def __init__(self, t_len, dt, n_clips, n_timesteps, transform=None, target_transform=None):
         super().__init__(transform, target_transform)
+        assert t_len <= n_timesteps, 't_len needs to be less or equal to n_timesteps'
+
         self.t_len = t_len
         self.dt = dt
 

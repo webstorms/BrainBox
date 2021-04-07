@@ -110,10 +110,10 @@ class LIFNeurons(nn.Module):
             post_spikes_list.append(post_spike)
 
         if return_all:
-            # Return spikes, membrane potential and input currents
+            # Return spikes and membrane potential
             return torch.stack(post_spikes_list, dim=2), torch.stack(mem_list, dim=2)
         else:
-            # batch x n_out x t_len x h_out x w_out
+            # batch x n_out x t_len x ...
             return torch.stack(post_spikes_list, dim=2)
 
 

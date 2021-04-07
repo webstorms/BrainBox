@@ -10,7 +10,7 @@ import pandas as pd
 
 class Trainer:
 
-    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, device='cuda'):
+    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, device='cuda', dtype=torch.float):
         self.root = root
         self.model = model
         self.train_dataset = train_dataset
@@ -18,15 +18,24 @@ class Trainer:
         self.batch_size = batch_size
         self.lr = lr
         self.device = device
+        self.dtype = dtype
 
         # Instantiate housekeeping variables
         self.id = str(uuid.uuid4().hex)
         self.log = {'train_loss': []}
         self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), 10 ** self.lr)
+
+        if dtype == torch.float:
+            self.optimizer = torch.optim.Adam(self.model.parameters(), 10 ** self.lr)
+        elif dtype == torch.half:
+            self.optimizer = torch.optim.Adam(self.model.parameters(), 10 ** self.lr, eps=1e-4)
 
         # Initialise the model
         self.model = self.model.to(device)
+        if dtype == torch.float:
+            self.model = self.model.float()
+        elif dtype == torch.half:
+            self.model = self.model.half()
         self.model.train()
 
         self.date = datetime.today().strftime('%Y%m%d')
@@ -41,7 +50,7 @@ class Trainer:
 
     @property
     def hyperparams(self):
-        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr}
+        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': self.dtype}
 
     @property
     def model_path(self):
@@ -97,8 +106,8 @@ class Trainer:
         epoch_loss = 0
 
         for batch_id, (data, target) in enumerate(self.train_data_loader):
-            data = data.to(self.device)
-            target = target.to(self.device)
+            data = data.to(self.device).type(self.dtype)
+            target = target.to(self.device).type(self.dtype)
 
             self.optimizer.zero_grad()
             output = self.model(data)
@@ -109,7 +118,7 @@ class Trainer:
 
         return epoch_loss
 
-    def train(self, save=True):
+    def train(self, save=False):
 
         self.on_training_start(save)
 
@@ -205,8 +214,8 @@ class DecayTrainer(Trainer):
 
         with torch.no_grad():
             for batch_id, (data, target) in enumerate(self.val_data_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                data = data.to(self.device).type(self.dtype)
+                target = target.to(self.device).type(self.dtype)
 
                 output = self.model(data)
                 total_loss += self.loss(output, target, self.model).item()
