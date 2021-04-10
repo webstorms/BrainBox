@@ -84,30 +84,23 @@ class LIFNeurons(nn.Module):
             inject_current_at_t = inject_current[:, :, t] if inject_current is not None else None
             input_current = self.compute_input_current(pre_spikes_at_t, inject_current_at_t, post_spikes_list)
 
-            new_syn = torch.einsum('bn...,n->bn...', syn, self.beta_syn) + input_current
+            # 1. Update synaptic conductance
+            syn = torch.einsum('bn...,n->bn...', syn, self.beta_syn) + input_current
 
-            # To reset or not to reset
-            c = (mem > 1)
-            reset = torch.zeros_like(mem)
-            reset[c] = torch.ones_like(mem)[c]
+            # 2. Update membrane potential
+            mem = (torch.einsum('bn...,n->bn...', mem, self.beta_mem) + torch.einsum('bn...,n->bn...', syn, 1 - self.beta_mem))
 
-            # Update membrane potential
-            new_mem = (torch.einsum('bn...,n->bn...', mem, self.beta_mem) + torch.einsum('bn...,n->bn...', new_syn, 1 - self.beta_mem))
-
-            if self.reset_type == 'HARD':
-                new_mem *= (1 - reset)
-
-            elif self.reset_type == 'SOFT':
-                new_mem -= reset
-
-            # To spike or not to spike
-            post_spike = self.spike_func(new_mem - 1)
-
-            mem = new_mem
-            syn = new_syn
-
-            mem_list.append(new_mem)
+            # 3. To spike or not to spike
+            post_spike = self.spike_func(mem - 1)
+            mem_list.append(mem.clone())
             post_spikes_list.append(post_spike)
+
+            # 4. Reset membrane potential for spiked neurons
+            with torch.no_grad():
+                if self.reset_type == 'HARD':
+                    mem *= (1 - post_spike)
+                elif self.reset_type == 'SOFT':
+                    mem -= post_spike
 
         if return_all:
             # Return spikes and membrane potential
@@ -127,7 +120,7 @@ class ConvLIFNeurons(LIFNeurons):
         self.spikes_to_current = nn.Conv2d(n_in, n_out, rf_size, stride, bias=bias)
 
     def compute_input_current(self, pre_spikes, inject_current, post_spikes):
-        # pre_spikes: batch x n_in x t_len x h x w
+        # pre_spikes: batch x n_in x h x w
         if pre_spikes is not None:
             return self.spikes_to_current(pre_spikes)
         else:
@@ -146,7 +139,7 @@ class RecConvLIFNeurons(LIFNeurons):
         self.post_spikes_to_current = nn.Conv2d(n_out, n_out, rec_spatial_size, padding=rec_spatial_size//2, bias=False)
 
     def compute_input_current(self, pre_spikes, inject_current, post_spikes):
-        # pre_spikes: batch x n_in x t_len x h x w
+        # pre_spikes: batch x n_in x h x w
         if pre_spikes is not None:
             current = self.pre_spikes_to_current(pre_spikes)
         else:

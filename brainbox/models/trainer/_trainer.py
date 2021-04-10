@@ -302,3 +302,25 @@ def load_model_log(root, model_id=None, **kwargs):
 
     return pd.read_csv(model_log_path)
 
+
+def remove_model(root, model_id):
+
+    def remove(path):
+        try:
+            os.remove(path)
+            print('Removed {0}'.format(path))
+        except:
+            print('Could not remove {0}'.format(path))
+
+    model_hyperparams = os.path.join(root, '{0}_hyperparams.csv'.format(model_id))
+    model_path = os.path.join(root, '{0}_model.pt'.format(model_id))
+    model_log_path = os.path.join(root, '{0}_log.csv'.format(model_id))
+
+    remove(model_hyperparams)
+    remove(model_path)
+    remove(model_log_path)
+
+
+def remove_models(root, model_ids):
+    for model_id in model_ids:
+        remove_model(root, model_id)

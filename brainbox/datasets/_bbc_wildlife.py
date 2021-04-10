@@ -32,7 +32,7 @@ class BBCWild(TemporalDataset):
         self.dataset = self.dataset.type(torch.FloatTensor)
 
     def load_clip(self, i):
-        x = self.dataset[i]
+        x = self.dataset[i, :, :-1]
         y = self.dataset[i, :, 1:]  # We shift the clip by one frame
 
         return x, y
