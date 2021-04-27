@@ -10,25 +10,38 @@ import pandas as pd
 
 class Trainer:
 
-    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, device='cuda', dtype=torch.float):
+    GRAD_VALUE_CLIP_PRE = 0
+    GRAD_VALUE_CLIP_POST = 1
+    GRAD_NORM_CLIP = 2
+
+    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None):
         self.root = root
         self.model = model
         self.train_dataset = train_dataset
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.lr = lr
+        self.optimizer_func = optimizer_func
         self.device = device
         self.dtype = dtype
+        self.grad_clip_type = grad_clip_type
+        self.grad_clip_value = grad_clip_value
 
         # Instantiate housekeeping variables
         self.id = str(uuid.uuid4().hex)
         self.log = {'train_loss': []}
         self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size)
 
-        if dtype == torch.float:
-            self.optimizer = torch.optim.Adam(self.model.parameters(), 10 ** self.lr)
-        elif dtype == torch.half:
-            self.optimizer = torch.optim.Adam(self.model.parameters(), 10 ** self.lr, eps=1e-4)
+        if self.dtype == torch.float:
+            self.optimizer = self.optimizer_func(self.model.parameters(), 10 ** self.lr)
+        elif self.dtype == torch.half:
+            self.optimizer = self.optimizer_func(self.model.parameters(), 10 ** self.lr, eps=1e-4)
+
+        # Register grad clippings
+        if self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_PRE:
+
+            for p in self.model.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, -grad_clip_value, grad_clip_value))
 
         # Initialise the model
         self.model = self.model.to(device)
@@ -50,7 +63,7 @@ class Trainer:
 
     @property
     def hyperparams(self):
-        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': self.dtype}
+        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': self.dtype, 'grad_clip': self.grad_clip}
 
     @property
     def model_path(self):
@@ -114,6 +127,16 @@ class Trainer:
             loss = self.loss(output, target, self.model)
             epoch_loss += loss.item()
             loss.backward()
+
+            if self.grad_clip_type is not None:
+
+                if self.grad_clip_type == Trainer.GRAD_NORM_CLIP:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_value)
+
+                elif self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_POST:
+                    torch.nn.utils.clip_grad_value_(self.model.parameters(), self.grad_clip_value)
+
+
             self.optimizer.step()
 
         return epoch_loss
@@ -136,8 +159,8 @@ class Trainer:
 
 class DecayTrainer(Trainer):
 
-    def __init__(self, root, model, train_dataset, val_dataset, n_epochs, batch_size, lr, lr_decay=0.5, max_train_steps=10, max_decay_steps=4, device='cuda'):
-        super().__init__(root, model, train_dataset, n_epochs, batch_size, lr, device)
+    def __init__(self, root, model, train_dataset, val_dataset, n_epochs, batch_size, lr, lr_decay=0.5, max_train_steps=10, max_decay_steps=4, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None):
+        super().__init__(root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func, device, dtype, grad_clip_type, grad_clip_value)
         self.val_dataset = val_dataset
         self.lr_decay = lr_decay
         self.max_train_steps = max_train_steps
@@ -197,7 +220,11 @@ class DecayTrainer(Trainer):
                 # Load the best model and re-instantiated the optimizer
                 if save:
                     self.model = torch.load(self.model_path)
-                self.optimizer = torch.optim.Adam(self.model.parameters(), self._lr)
+
+                if self.dtype == torch.float:
+                    self.optimizer = self.optimizer_func(self.model.parameters(), self._lr)
+                elif self.dtype == torch.half:
+                    self.optimizer = self.optimizer_func(self.model.parameters(), self._lr, eps=1e-4)
 
     def on_training_start(self, save):
         if save:
