@@ -136,7 +136,6 @@ class Trainer:
                 elif self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_POST:
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), self.grad_clip_value)
 
-
             self.optimizer.step()
 
         return epoch_loss
