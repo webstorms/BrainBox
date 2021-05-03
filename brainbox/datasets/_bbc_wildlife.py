@@ -3,18 +3,19 @@ import pickle
 
 import torch
 
-from ._dataset import TemporalDataset
+from ._dataset import PredictionTemporalDataset
 
 
-class BBCWild(TemporalDataset):
+class BBCWild(PredictionTemporalDataset):
 
     _N_TRAIN_CLIPS = 812
     _N_TEST_CLIPS = 203
     _CLIP_LEN = 50
 
-    def __init__(self, root, t_len, dt, train=True, transform=None, target_transform=None):
+    def __init__(self, root, t_len, dt, resample_step=1, pred_horizon=1, train=True, transform=None, target_transform=None):
         n_clips = BBCWild._N_TRAIN_CLIPS if train else BBCWild._N_TEST_CLIPS
-        super().__init__(t_len, dt, n_clips, BBCWild._CLIP_LEN, transform, target_transform)
+        super().__init__(t_len, dt, n_clips, BBCWild._CLIP_LEN, resample_step, pred_horizon, transform,
+                         target_transform)
         self.root = root
 
         file = open(self.model_outputs_path, 'rb')
@@ -32,12 +33,10 @@ class BBCWild(TemporalDataset):
         self.dataset = self.dataset.type(torch.FloatTensor)
 
     def load_clip(self, i):
-        x = self.dataset[i, :, :-1]
-        y = self.dataset[i, :, 1:]  # We shift the clip by one frame
+        x = self.dataset[i]
 
-        return x, y
+        return x
 
     @property
     def model_outputs_path(self):
         return os.path.join(self.root, 'preprocessed_dataset.pkl')
-

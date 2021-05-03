@@ -65,3 +65,41 @@ class TemporalDataset(BBDataset):
 
     def __len__(self):
         return len(self.ids)
+
+
+class PredictionTemporalDataset(TemporalDataset):
+
+    def __init__(self, t_len, dt, n_clips, n_timesteps, resample_step, pred_horizon, transform=None,
+                 target_transform=None):
+        n_timesteps = (n_timesteps - pred_horizon) // resample_step
+        super().__init__(t_len, dt, n_clips, n_timesteps, transform, target_transform)
+
+        self.resample_step = resample_step
+        self.pred_horizon = pred_horizon
+
+    @property
+    def hyperparams(self):
+        return {**super().hyperparams, 'resample_step': self.resample_step, 'pred_horizon': self.pred_horizon}
+
+    def __getitem__(self, i):
+        clip_idx, t_idx = self.ids[i]
+        x = self.load_clip(clip_idx)
+
+        # 1. Shift
+        y = x[:, self.pred_horizon:]
+        x = x[:, :-self.pred_horizon]
+
+        # 2. Re-sample
+        y = y[:, 0:y.shape[1]:self.resample_step]
+        x = x[:, 0:x.shape[1]:self.resample_step]
+
+        x = x[:, t_idx:t_idx + self.t_len]
+        y = y[:, t_idx:t_idx + self.t_len]
+
+        if self.transform is not None:
+            x = self.transform(x)
+
+        if self.target_transform is not None:
+            y = self.target_transform(y)
+
+        return x, y

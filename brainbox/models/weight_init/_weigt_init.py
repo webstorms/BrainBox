@@ -9,12 +9,12 @@ class WeightInit:
 
 class Constant(WeightInit):
 
-    def __init__(self, name, val=0.42):
+    def __init__(self, name, c=0.42):
         super(Constant, self).__init__(name)
-        self.val = val
+        self.c = c
 
     def __call__(self, weight):
-        nn.init.constant_(weight, self.val)
+        nn.init.constant_(weight, self.c)
 
     @property
     def hyperparams(self):
@@ -34,6 +34,21 @@ class Uniform(WeightInit):
     @property
     def hyperparams(self):
         return {'init_{0}_uniform'.format(self.name): {'a': self.a, 'b': self.b}}
+
+
+class GlorotUniform(WeightInit):
+
+    def __init__(self, name, a=0, b=1):
+        super(GlorotUniform, self).__init__(name)
+        self.a = a
+        self.b = b
+
+    def __call__(self, weight):
+        nn.init.xavier_uniform_(weight, self.a, self.b)
+
+    @property
+    def hyperparams(self):
+        return {'init_{0}_glorotuniform'.format(self.name): {'a': self.a, 'b': self.b}}
 
 
 class Normal(WeightInit):
@@ -57,7 +72,7 @@ class GlorotNormal(WeightInit):
         super(GlorotNormal, self).__init__(name)
 
     def __call__(self, weight):
-        nn.init.normal_(weight)
+        nn.init.xavier_normal_(weight)
 
     @property
     def hyperparams(self):
