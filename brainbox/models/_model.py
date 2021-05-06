@@ -37,6 +37,8 @@ class BBModel(nn.Module):
             w_initializer = weight_init.Normal(weight_name, kwargs.get('mean', 0), kwargs.get('std', 1))
         elif init_type == 'glorot_normal':
             w_initializer = weight_init.GlorotNormal(weight_name)
+        elif init_type == 'identity':
+            w_initializer = weight_init.Identity(weight_name, kwargs.get('c', 1))
 
         w_initializer(weight)
 

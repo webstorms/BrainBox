@@ -10,9 +10,9 @@ import pandas as pd
 
 class Trainer:
 
-    GRAD_VALUE_CLIP_PRE = 0
-    GRAD_VALUE_CLIP_POST = 1
-    GRAD_NORM_CLIP = 2
+    GRAD_VALUE_CLIP_PRE = 'GRAD_VALUE_CLIP_PRE'
+    GRAD_VALUE_CLIP_POST = 'GRAD_VALUE_CLIP_POST'
+    GRAD_NORM_CLIP = 'GRAD_NORM_CLIP'
 
     def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None):
         self.root = root
@@ -63,7 +63,7 @@ class Trainer:
 
     @property
     def hyperparams(self):
-        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': self.dtype, 'grad_clip': self.grad_clip}
+        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': self.dtype, 'grad_clip_type': self.grad_clip_type, 'grad_clip_value': self.grad_clip_value}
 
     @property
     def model_path(self):
@@ -148,7 +148,7 @@ class Trainer:
             print('Starting epoch {0}...'.format(epoch))
             # Train the model
             epoch_loss = self.train_for_single_epoch()
-
+            print('epoch_loss', epoch_loss)
             self.log['train_loss'].append(epoch_loss)
 
             self.on_epoch_complete(save)

@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -78,7 +79,19 @@ class GlorotNormal(WeightInit):
     def hyperparams(self):
         return {'init_{0}_glorotnormal'.format(self.name): {}}
 
-# TODO: Gamma
 
-# TODO: Identity
+class Identity(WeightInit):
+
+    def __init__(self, name, c=1):
+        super(Identity, self).__init__(name)
+        self.c = c
+
+    def __call__(self, weight):
+        nn.init.eye_(weight)
+        with torch.no_grad():
+            weight *= self.c
+
+    @property
+    def hyperparams(self):
+        return {'init_{0}_constant'.format(self.name): {'c': self.c}}
 
