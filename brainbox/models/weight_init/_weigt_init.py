@@ -19,7 +19,7 @@ class Constant(WeightInit):
 
     @property
     def hyperparams(self):
-        return {'init_{0}_constant'.format(self.name): {'c': self.c}}
+        return {'init_{0}'.format(self.name): {'name': 'constant', 'c': self.c}}
 
 
 class Uniform(WeightInit):
@@ -34,22 +34,20 @@ class Uniform(WeightInit):
 
     @property
     def hyperparams(self):
-        return {'init_{0}_uniform'.format(self.name): {'a': self.a, 'b': self.b}}
+        return {'init_{0}'.format(self.name): {'name': 'uniform', 'a': self.a, 'b': self.b}}
 
 
 class GlorotUniform(WeightInit):
 
-    def __init__(self, name, a=0, b=1):
+    def __init__(self, name):
         super(GlorotUniform, self).__init__(name)
-        self.a = a
-        self.b = b
 
     def __call__(self, weight):
-        nn.init.xavier_uniform_(weight, self.a, self.b)
+        nn.init.xavier_uniform_(weight)
 
     @property
     def hyperparams(self):
-        return {'init_{0}_glorotuniform'.format(self.name): {'a': self.a, 'b': self.b}}
+        return {'init_{0}'.format(self.name): {'name': 'glorotuniform'}}
 
 
 class Normal(WeightInit):
@@ -64,7 +62,7 @@ class Normal(WeightInit):
 
     @property
     def hyperparams(self):
-        return {'init_{0}_normal'.format(self.name): {'mean': self.mean, 'std': self.std}}
+        return {'init_{0}'.format(self.name): {'name': 'normal', 'mean': self.mean, 'std': self.std}}
 
 
 class GlorotNormal(WeightInit):
@@ -77,7 +75,7 @@ class GlorotNormal(WeightInit):
 
     @property
     def hyperparams(self):
-        return {'init_{0}_glorotnormal'.format(self.name): {}}
+        return {'init_{0}'.format(self.name): {'name': 'glorotnormal'}}
 
 
 class Identity(WeightInit):
@@ -93,5 +91,5 @@ class Identity(WeightInit):
 
     @property
     def hyperparams(self):
-        return {'init_{0}_constant'.format(self.name): {'c': self.c}}
+        return {'init_{0}'.format(self.name): {'name': 'identity', 'c': self.c}}
 

@@ -102,6 +102,9 @@ class Trainer:
     def loss(self, output, target, model):
         raise NotImplementedError
 
+    def val_loss(self, output, target, model):
+        raise NotImplementedError
+
     def on_epoch_complete(self, save):
         if save:
             self.save_model_log()
@@ -244,7 +247,7 @@ class DecayTrainer(Trainer):
                 target = target.to(self.device).type(self.dtype)
 
                 output = self.model(data)
-                total_loss += self.loss(output, target, self.model).item()
+                total_loss += self.val_loss(output, target, self.model).item()
 
         self.model.train()
 

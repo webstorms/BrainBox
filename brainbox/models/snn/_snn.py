@@ -167,7 +167,7 @@ class DaleRecConvLIFNeurons(LIFNeurons):
         # Set all units as excitatory except the first frac_inhibitory * n_out
         self._excitatory_inhibitory_mask = nn.Parameter(torch.ones(self._recurrent_connectivity.shape), requires_grad=False)
         n_inhibitory_neurons = int(frac_inhibitory * n_out)
-        self._excitatory_inhibitory_mask[:n_inhibitory_neurons] = -1
+        self._excitatory_inhibitory_mask[:, :n_inhibitory_neurons] = -1
 
     @property
     def recurrent_connectivity(self):

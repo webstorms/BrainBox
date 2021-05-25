@@ -90,6 +90,20 @@ class ClipResize:
     pass
 
 
+class ClipCrop:
+
+    def __init__(self, h, w):
+        self.h = h
+        self.w = w
+
+    def __call__(self, clip):
+        return clip[:, :, self.h:-self.h, self.w:-self.w]
+
+    @property
+    def hyperparams(self):
+        return {'clip_crop': {'h': self.h, 'w': self.w}}
+
+
 class ImgToClip:
 
     def __init__(self, pre_blanks, repeats, post_blanks):
