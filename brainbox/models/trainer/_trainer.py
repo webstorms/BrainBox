@@ -14,7 +14,10 @@ class Trainer:
     GRAD_VALUE_CLIP_POST = 'GRAD_VALUE_CLIP_POST'
     GRAD_NORM_CLIP = 'GRAD_NORM_CLIP'
 
-    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None):
+    SAVE_OBJECT = 'SAVE_OBJECT'
+    SAVE_DICT = 'SAVE_DICT'
+
+    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type='SAVE_OBJECT'):
         self.root = root
         self.model = model
         self.train_dataset = train_dataset
@@ -26,6 +29,7 @@ class Trainer:
         self.dtype = dtype
         self.grad_clip_type = grad_clip_type
         self.grad_clip_value = grad_clip_value
+        self.save_type = save_type
 
         # Instantiate housekeeping variables
         self.id = str(uuid.uuid4().hex)
@@ -84,7 +88,10 @@ class Trainer:
         return os.path.join(self.root, name)
 
     def save_model(self):
-        torch.save(self.model, self.model_path)
+        if self.save_type == Trainer.SAVE_OBJECT:
+            torch.save(self.model, self.model_path)
+        elif self.save_type == Trainer.SAVE_DICT:
+            torch.save(self.model.state_dict(), self.model_path)
 
     def save_hyperparams(self):
         dataset_hyperparams = Trainer._append_prefix_to_hyperparams('dataset', self.train_dataset.hyperparams)
@@ -161,8 +168,8 @@ class Trainer:
 
 class DecayTrainer(Trainer):
 
-    def __init__(self, root, model, train_dataset, val_dataset, n_epochs, batch_size, lr, lr_decay=0.5, max_train_steps=10, max_decay_steps=4, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None):
-        super().__init__(root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func, device, dtype, grad_clip_type, grad_clip_value)
+    def __init__(self, root, model, train_dataset, val_dataset, n_epochs, batch_size, lr, lr_decay=0.5, max_train_steps=10, max_decay_steps=4, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type=Trainer.SAVE_OBJECT):
+        super().__init__(root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func, device, dtype, grad_clip_type, grad_clip_value, save_type)
         self.val_dataset = val_dataset
         self.lr_decay = lr_decay
         self.max_train_steps = max_train_steps
@@ -279,77 +286,3 @@ def get_trainer(trainer_class, loss_function, *args):
     model_trainer.loss = loss_function
 
     return model_trainer
-
-
-def get_all_model_hyperparams(root):
-    all_model_hyperparam_paths = glob.glob('{0}/*hyperparams.csv'.format(root))
-
-    model_hyperparam_dfs = []
-
-    for model_hyperparam_path in all_model_hyperparam_paths:
-        model_id = '_'.join(model_hyperparam_path.split('/')[-1].split('_')[:2])
-
-        model_hyperparam_df = pd.read_csv(model_hyperparam_path, names=[0, model_id]).set_index(0)
-        model_hyperparam_dfs.append(model_hyperparam_df)
-
-    return pd.concat(model_hyperparam_dfs, axis=1).T
-
-
-def query_model_ids(root, **kwargs):
-    all_model_hyperparam = get_all_model_hyperparams(root)
-
-    query = all_model_hyperparam.index != None
-    for key, value in kwargs.items():
-        query &= (all_model_hyperparam[key] == str(value))
-
-    return all_model_hyperparam[query]
-
-
-def load_model(root, model_id=None, **kwargs):
-
-    if model_id is None:
-        model_ids = query_model_ids(root, **kwargs)
-        assert len(model_ids) == 1, 'Multiple models match the query criteria'
-        model_id = model_ids.index[0]
-
-    model_path = os.path.join(root, '{0}_model.pt'.format(model_id))
-
-    model = torch.load(model_path)
-    model.eval()
-
-    return model
-
-
-def load_model_log(root, model_id=None, **kwargs):
-
-    if model_id is None:
-        model_ids = query_model_ids(root, **kwargs)
-        assert len(model_ids) == 1, 'Multiple models match the query criteria'
-        model_id = model_ids.index[0]
-
-    model_log_path = os.path.join(root, '{0}_log.csv'.format(model_id))
-
-    return pd.read_csv(model_log_path)
-
-
-def remove_model(root, model_id):
-
-    def remove(path):
-        try:
-            os.remove(path)
-            print('Removed {0}'.format(path))
-        except:
-            print('Could not remove {0}'.format(path))
-
-    model_hyperparams = os.path.join(root, '{0}_hyperparams.csv'.format(model_id))
-    model_path = os.path.join(root, '{0}_model.pt'.format(model_id))
-    model_log_path = os.path.join(root, '{0}_log.csv'.format(model_id))
-
-    remove(model_hyperparams)
-    remove(model_path)
-    remove(model_log_path)
-
-
-def remove_models(root, model_ids):
-    for model_id in model_ids:
-        remove_model(root, model_id)

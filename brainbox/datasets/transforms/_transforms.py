@@ -60,6 +60,17 @@ class ClipGrayscale:
         return {'clip_grayscale': {}}
 
 
+class ClipColorfy:
+
+    def __call__(self, clip):
+
+        return clip.repeat(3, 1, 1, 1)
+
+    @property
+    def hyperparams(self):
+        return {'clip_colorfy': {}}
+
+
 class GaussianKernel:
 
     def __init__(self, sigma, width):
