@@ -29,19 +29,21 @@ def append_scores(root, model_hyperparams, scoring_dict, dataset, batch_size, de
 
     for i, model_id in enumerate(model_hyperparams.index):
         print('Processing model {0}/{1}...'.format(i, len(model_hyperparams.index)))
+        try:
+            model = load_model(root, model_id)
+            model_id_scores = model_hyperparams.loc[model_id].to_dict()
+            model_id_scores['id'] = model_id
 
-        model = load_model(root, model_id)
-        model_id_scores = model_hyperparams.loc[model_id].to_dict()
-        model_id_scores['id'] = model_id
+            for score_name in scoring_dict:
+                metric = scoring_dict[score_name]
+                model_id_scores[score_name] = get_score(model, metric).item()
+            scores.append(model_id_scores)
 
-        for score_name in scoring_dict:
-            metric = scoring_dict[score_name]
-            model_id_scores[score_name] = get_score(model, metric).item()
-        scores.append(model_id_scores)
-
-        if 'cuda' in device:
-            del model
-            torch.cuda.empty_cache()
+            if 'cuda' in device:
+                del model
+                torch.cuda.empty_cache()
+        except:
+            print(model_id)
 
     return pd.DataFrame(scores)
 

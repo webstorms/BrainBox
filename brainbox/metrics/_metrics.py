@@ -3,7 +3,7 @@ from scipy import stats
 from sklearn.utils import resample
 
 
-def cc(output, target):
+def cc(output, target, nan_val=0):
     # output: b x 1 x t x n
     # target: b x 1 x t x n
     # returns: b x 1 x n
@@ -15,6 +15,7 @@ def cc(output, target):
     exp_y2 = (target ** 2).mean(dim=2)
 
     _cc = (exp_xy - exp_x * exp_y) / ((torch.sqrt(exp_x2 - exp_x ** 2)) * (torch.sqrt(exp_y2 - exp_y ** 2)))
+    _cc[torch.isnan(_cc)] = nan_val
 
     return _cc
 

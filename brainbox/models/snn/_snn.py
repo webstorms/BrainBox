@@ -112,12 +112,13 @@ class LIFNeurons(nn.Module):
 
 class ConvLIFNeurons(LIFNeurons):
 
-    def __init__(self, n_in, n_out, rf_size, stride, beta_syn_init=[0.9], beta_mem_init=[0.9], beta_syn_range=[0, 1], beta_mem_range=[0, 1], beta_syn_diff=False, beta_mem_diff=False, reset_type='SOFT', spike_func=FastSigmoid.get(100), bias=True):
+    def __init__(self, n_in, n_out, kh, kw, stride, beta_syn_init=[0.9], beta_mem_init=[0.9], beta_syn_range=[0, 1], beta_mem_range=[0, 1], beta_syn_diff=False, beta_mem_diff=False, reset_type='SOFT', spike_func=FastSigmoid.get(100), bias=True):
         super().__init__(n_in, n_out, beta_syn_init, beta_mem_init, beta_syn_range, beta_mem_range, beta_syn_diff, beta_mem_diff, reset_type, spike_func, bias)
-        self.rf_size = rf_size
+        self.kh = kh
+        self.kw = kw
         self.stride = stride
 
-        self.spikes_to_current = nn.Conv2d(n_in, n_out, rf_size, stride, bias=bias)
+        self.spikes_to_current = nn.Conv2d(n_in, n_out, (kh, kw), stride, bias=bias)
 
     def compute_input_current(self, pre_spikes, inject_current, post_spikes):
         # pre_spikes: batch x n_in x h x w
@@ -129,13 +130,14 @@ class ConvLIFNeurons(LIFNeurons):
 
 class RecConvLIFNeurons(LIFNeurons):
 
-    def __init__(self, n_in, n_out, rf_size, rf_stride, rec_spatial_size, beta_syn_init=[0.9], beta_mem_init=[0.9], beta_syn_range=[0, 1], beta_mem_range=[0, 1], beta_syn_diff=False, beta_mem_diff=False, reset_type='SOFT', spike_func=FastSigmoid.get(100), bias=True):
+    def __init__(self, n_in, n_out, kh, kw, rf_stride, rec_spatial_size, beta_syn_init=[0.9], beta_mem_init=[0.9], beta_syn_range=[0, 1], beta_mem_range=[0, 1], beta_syn_diff=False, beta_mem_diff=False, reset_type='SOFT', spike_func=FastSigmoid.get(100), bias=True):
         super().__init__(n_in, n_out, beta_syn_init, beta_mem_init, beta_syn_range, beta_mem_range, beta_syn_diff, beta_mem_diff, reset_type, spike_func, bias)
-        self.rf_size = rf_size
+        self.kh = kh
+        self.kw = kw
         self.rf_stride = rf_stride
         self.rec_spatial_size = rec_spatial_size
 
-        self.pre_spikes_to_current = nn.Conv2d(n_in, n_out, rf_size, rf_stride, bias=bias)
+        self.pre_spikes_to_current = nn.Conv2d(n_in, n_out, (kh, kw), rf_stride, bias=bias)
         self.post_spikes_to_current = nn.Conv2d(n_out, n_out, rec_spatial_size, padding=rec_spatial_size//2, bias=False)
 
     def compute_input_current(self, pre_spikes, inject_current, post_spikes):
@@ -153,15 +155,16 @@ class RecConvLIFNeurons(LIFNeurons):
 
 class DaleRecConvLIFNeurons(LIFNeurons):
 
-    def __init__(self, n_in, n_out, rf_size, rf_stride, rec_spatial_size, frac_inhibitory=0.1, beta_syn_init=[0.9], beta_mem_init=[0.9], beta_syn_range=[0, 1], beta_mem_range=[0, 1], beta_syn_diff=False, beta_mem_diff=False, reset_type='SOFT', spike_func=FastSigmoid.get(100), bias=True):
+    def __init__(self, n_in, n_out, kh, kw, rf_stride, rec_spatial_size, frac_inhibitory=0.1, beta_syn_init=[0.9], beta_mem_init=[0.9], beta_syn_range=[0, 1], beta_mem_range=[0, 1], beta_syn_diff=False, beta_mem_diff=False, reset_type='SOFT', spike_func=FastSigmoid.get(100), bias=True):
         super().__init__(n_in, n_out, beta_syn_init, beta_mem_init, beta_syn_range, beta_mem_range, beta_syn_diff, beta_mem_diff, reset_type, spike_func, bias)
         assert 0 <= frac_inhibitory <= 1, 'Fraction of inhibitory neuron needs to be in range [0,1].'
-        self.rf_size = rf_size
+        self.kh = kh
+        self.kw = kw
         self.rf_stride = rf_stride
         self.rec_spatial_size = rec_spatial_size
         self.frac_inhibitory = frac_inhibitory
 
-        self.pre_spikes_to_current = nn.Conv2d(n_in, n_out, rf_size, rf_stride, bias=bias)
+        self.pre_spikes_to_current = nn.Conv2d(n_in, n_out, (kh, kw), rf_stride, bias=bias)
         self._recurrent_connectivity = nn.Parameter(nn.Conv2d(n_out, n_out, rec_spatial_size).weight, requires_grad=True)
 
         # Set all units as excitatory except the first frac_inhibitory * n_out

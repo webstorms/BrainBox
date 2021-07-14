@@ -97,8 +97,32 @@ class GaussianKernel:
 
 class ClipResize:
 
-    # TODO
-    pass
+    def __init__(self, k, s, p):
+        self.k = k
+        self.s = s
+        self.p = p
+        self._filters = torch.ones(k, k).view(1, 1, 1, k, k) / (k**2)
+
+    def __call__(self, clip):
+        return F.conv3d(clip.unsqueeze(0), self._filters, stride=(1, self.s, self.s), padding=(0, self.p, self.p))[0]
+
+    @property
+    def hyperparams(self):
+        return {'clip_resize': {'k': self.k, 's': self.s, 'p': self.p}}
+
+
+class ClipBound:
+
+    def __init__(self, vmin, vmax):
+        self.vmin = vmin
+        self.vmax = vmax
+
+    def __call__(self, clip):
+        return torch.clamp(clip, min=sef.vmin, max=self.vmax)
+
+    @property
+    def hyperparams(self):
+        return {'clip_bound': {'vmin': self.vmin, 'vmax': self.vmax}}
 
 
 class ClipCrop:
@@ -108,7 +132,12 @@ class ClipCrop:
         self.w = w
 
     def __call__(self, clip):
-        return clip[:, :, self.h:-self.h, self.w:-self.w]
+        if self.h > 0:
+            clip = clip[:, :, self.h:-self.h, :]
+        if self.w > 0:
+            clip = clip[:, :, :, self.w:-self.w]
+
+        return clip
 
     @property
     def hyperparams(self):
