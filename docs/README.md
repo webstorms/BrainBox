@@ -37,8 +37,8 @@ $ git clone https://github.com/webstorms/BrainBox.git
 
 ## Getting started
 
-* [Building and training a model](notebooks/"Predicting neural responses.ipynb")
-* [Estimating model RFs and fitting gabors](notebooks/"Receptive field analysis.ipynb")
+* [Building and training a model](https://github.com/webstorms/BrainBox/blob/main/notebooks/Predicting%20neural%20responses.ipynb)
+* [Estimating model RFs and fitting gabors](https://github.com/webstorms/BrainBox/blob/main/notebooks/Receptive%20field%20analysis.ipynb)
 
 ## Roadmap
 
