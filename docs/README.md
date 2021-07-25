@@ -37,8 +37,8 @@ $ git clone https://github.com/webstorms/BrainBox.git
 
 ## Getting started
 
-* Tutorial on building, training and validating a model to predict neural responses
-* Tutorial on estimating model receptive fields and fitting gabors
+* [Building and training a model](notebooks/"Predicting neural responses.ipynb")
+* [Estimating model RFs and fitting gabors](notebooks/"Receptive field analysis.ipynb")
 
 ## Roadmap
 
