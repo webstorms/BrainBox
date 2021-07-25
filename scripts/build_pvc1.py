@@ -385,18 +385,18 @@ def main():
 
     # # 2. Build neural responses
     # # 2.1. Convert matlab spike frames to python
-    # frames_src_path = os.path.join(args.path, 'crcns-ringach-data', 'neurodata')
-    # spike_frames_builder = SpikeFrameBuilder(frames_src_path)
-    # spike_frames = spike_frames_builder.build()
+    frames_src_path = os.path.join(args.path, 'crcns-ringach-data', 'neurodata')
+    spike_frames_builder = SpikeFrameBuilder(frames_src_path)
+    spike_frames = spike_frames_builder.build()
 
     # # 2.2. Convert spike frames to formatted tensors
-    # dst_single_path = os.path.join(args.path, 'processed', 'single_trial_responses.pt')
-    # dst_multi_path = os.path.join(args.path, 'processed', 'multi_trial_responses.pt')
-    # neural_response_builder = NeuralResponseBuilder(spike_frames)
-    # single_responses = neural_response_builder.build(PVC1Config.SINGLE_TRIAL_REP)
-    # multi_responses = neural_response_builder.build(PVC1Config.MULTI_TRIAL_REP)
-    # torch.save(single_responses, dst_single_path)
-    # torch.save(multi_responses, dst_multi_path)
+    dst_single_path = os.path.join(args.path, 'processed', 'single_trial_responses.pt')
+    dst_multi_path = os.path.join(args.path, 'processed', 'multi_trial_responses.pt')
+    neural_response_builder = NeuralResponseBuilder(spike_frames)
+    single_responses = neural_response_builder.build(PVC1Config.SINGLE_TRIAL_REP)
+    multi_responses = neural_response_builder.build(PVC1Config.MULTI_TRIAL_REP)
+    torch.save(single_responses, dst_single_path)
+    torch.save(multi_responses, dst_multi_path)
 
 
 if __name__ == '__main__':
