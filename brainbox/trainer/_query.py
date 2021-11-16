@@ -5,7 +5,7 @@ import itertools
 import torch
 import pandas as pd
 
-from brainbox.models.trainer import Trainer
+from brainbox.trainer import Trainer
 
 
 def append_scores(root, model_hyperparams, scoring_dict, dataset, batch_size, device, dtype):
