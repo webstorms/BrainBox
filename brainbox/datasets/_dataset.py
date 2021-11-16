@@ -6,7 +6,7 @@ class BBDataset(torch.utils.data.Dataset):
     def __init__(self, transform=None, target_transform=None):
         self.transform = transform
         self.target_transform = target_transform
-
+    
     @staticmethod
     def _append_prefix_to_hyperparams(prefix, hyperparams):
         return {'_'.join([prefix, key]): value for key, value in hyperparams.items()}

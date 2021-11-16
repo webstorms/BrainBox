@@ -9,7 +9,7 @@ import pandas as pd
 
 
 class Trainer:
-
+    
     GRAD_VALUE_CLIP_PRE = 'GRAD_VALUE_CLIP_PRE'
     GRAD_VALUE_CLIP_POST = 'GRAD_VALUE_CLIP_POST'
     GRAD_NORM_CLIP = 'GRAD_NORM_CLIP'
@@ -17,7 +17,7 @@ class Trainer:
     SAVE_OBJECT = 'SAVE_OBJECT'
     SAVE_DICT = 'SAVE_DICT'
 
-    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type='SAVE_OBJECT'):
+    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type='SAVE_DICT'):
         self.root = root
         self.model = model
         self.train_dataset = train_dataset
@@ -124,6 +124,19 @@ class Trainer:
         if save:
             self.save_model()
 
+    def compute_metric_per_batch(self, metric):
+        metric_list = []
+
+        with torch.no_grad():
+            for data, target in self.train_data_loader:
+                data = data.to(self.device).type(self.dtype)
+                target = target.to(self.device).type(self.dtype)
+                output = self.model(data)
+                metric_value = metric(output, target, self.model)
+                metric_list.append(metric_value)
+
+        return metric_list
+
     def train_for_single_epoch(self):
 
         epoch_loss = 0
@@ -148,7 +161,7 @@ class Trainer:
 
             self.optimizer.step()
 
-        return epoch_loss
+        return epoch_loss / (batch_id + 1)
 
     def train(self, save=False):
 
