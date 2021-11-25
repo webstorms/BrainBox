@@ -114,16 +114,85 @@ class GratingsProber:
         return self.grating_results.iloc[max_output_index]['temporal_frequency']
 
     @property
+    def preferred_model_output(self):
+        return self.grating_results['model_output'].max()
+
+    @property
     def orientation_selectivity_index(self):
-        raise NotImplementedError
+        """
+        Marques T, Nguyen J, Fioreze G, Petreanu L (2018)
+        The functional organization of cortical feedback
+        inputs to primary visual cortex. Nature Neuro-
+        science 21:757–764.
+        """
+
+        assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
+
+        orthogonal_orientation = (self.preferred_orientation + np.pi/2) % 2*np.pi
+
+        orthogonal_orientation_response = self.grating_results[
+            (self.grating_results["theta"] == orthogonal_orientation) &
+            (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq) &
+            (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq)
+        ]["model_output"]
+
+        return (self.preferred_model_output - orthogonal_orientation_response) /
+                (self.preferred_model_output + orthogonal_orientation_response)
 
     @property
     def direction_selectivity_index(self):
-        raise NotImplementedError
+        """
+        Marques T, Nguyen J, Fioreze G, Petreanu L (2018)
+        The functional organization of cortical feedback
+        inputs to primary visual cortex. Nature Neuro-
+        science 21:757–764.
+        """
+
+        assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
+
+        opposite_direction = (self.preferred_direction + np.pi) % 2*np.pi
+
+        opposite_direction_response = self.grating_results[
+            (self.grating_results["theta"] == opposite_direction) &
+            (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq) &
+            (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq)
+        ]["model_output"]
+
+        return (self.preferred_model_output - orthogonal_orientation_response) /
+                (self.preferred_model_output + orthogonal_orientation_response)
 
     @property
     def circular_variance(self):
-        raise NotImplementedError
+        """
+            Singer Y, Willmore BD, King AJ, Harper NS (2019)
+            Hierarchical temporal prediction captures motion
+            processing from retina to higher visual cortex.
+            BioRxiv p. 575464.
+        """
+        assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
+
+        max_response_by_theta = self.grating_results[
+            (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq) &
+            (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq)
+        ]
+        max_response_by_theta = tuning_curve.sort_values(by=['theta'])
+        
+        tuning_curve = max_response_by_theta[['model_output']].to_numpy().flatten()
+        tuning_curve_angles = max_response_by_theta[['theta']].to_numpy().flatten()
+        
+        sum_sin = 0
+        sum_cos = 0
+        sum_r = 0
+        
+        for i in range(len(tuning_curve)):
+            r = tuning_curve[i]
+            th = tuning_curve_angles[i]
+            
+            sum_sin += r*math.sin(2*th)
+            sum_cos += r*math.cos(2*th)
+            sum_r += r
+            
+        return 1 - math.sqrt(sum_sin**2 + sum_cos**2)/sum_r
 
     @property
     def orientation_bandwidth(self):
