@@ -1,8 +1,10 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
 import numpy as np
+from scipy.optimize import curve_fit
 
 
 class GratingsProber:
@@ -115,7 +117,23 @@ class GratingsProber:
 
     @property
     def preferred_model_output(self):
+        assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
         return self.grating_results['model_output'].max()
+
+    @property
+    def orientation_tuning_curve(self):
+        assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
+
+        max_response_by_theta = self.grating_results[
+            (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq) &
+            (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq)
+        ]
+        max_response_by_theta = tuning_curve.sort_values(by=['theta'])
+        
+        theta = max_response_by_theta[['theta']].to_numpy().flatten()
+        tuning_curve = max_response_by_theta[['model_output']].to_numpy().flatten()
+
+        return theta, tuning_curve
 
     @property
     def orientation_selectivity_index(self):
@@ -171,14 +189,7 @@ class GratingsProber:
         """
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
 
-        max_response_by_theta = self.grating_results[
-            (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq) &
-            (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq)
-        ]
-        max_response_by_theta = tuning_curve.sort_values(by=['theta'])
-        
-        tuning_curve = max_response_by_theta[['model_output']].to_numpy().flatten()
-        tuning_curve_angles = max_response_by_theta[['theta']].to_numpy().flatten()
+        theta, tuning_curve = self.orientation_tuning_curve
         
         sum_sin = 0
         sum_cos = 0
@@ -186,7 +197,7 @@ class GratingsProber:
         
         for i in range(len(tuning_curve)):
             r = tuning_curve[i]
-            th = tuning_curve_angles[i]
+            th = theta[i]
             
             sum_sin += r*math.sin(2*th)
             sum_cos += r*math.cos(2*th)
@@ -196,7 +207,32 @@ class GratingsProber:
 
     @property
     def orientation_bandwidth(self):
-        raise NotImplementedError
+        """
+            Bandwidth describe using half-width at half-maximum
+            of Gaussian fit to tuning curve
+
+            Jeon BB, Swain AD, Good JT, et al. (2018)
+            Feature selectivity is stable in primary
+            visual cortex across a range of spatial frequencies.
+            Sci Rep 8, 15288
+        """
+
+        assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
+
+        theta, tuning_curve = self.orientation_tuning_curve
+
+        def gauss(x, *p):
+            A, mu, variance = p
+            return A*np.exp(-(x-mu)**2/(2*variance))
+
+        coeff, _ = curve_fit(
+            gauss,
+            theta,
+            tuning_curve,
+            p0=[np.max(tuning_curve), theta[np.argmax(tuning_curve)], 1]
+        )
+
+        return math.sqrt(2*math.log(2)) * math.sqrt(coeff[2])
 
     @property
     def modulation_ratio(self):
