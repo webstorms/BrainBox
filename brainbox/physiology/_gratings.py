@@ -1,15 +1,14 @@
-import math
+import math, collections
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
 import numpy as np
-from scipy.optimize import curve_fit
 
 
 class GratingsProber:
 
-    GRATING_THETAS = np.linspace(0, np.pi, 20)
+    GRATING_THETAS = np.linspace(0, np.pi*2, 32)
     GRATINGS_SPATIAL_FREQS = np.linspace(0, 0.4, 20)
     GRATINGS_TEMPORAL_FREQS = np.linspace(1, 2)
 
@@ -17,6 +16,9 @@ class GratingsProber:
     SINFIT_OFFSETS_INIT = [0, 1, 4]
     SINFIT_N_ITERATIONS = 500
     SINFIT_LOSS_THRESH = 1e-2
+
+    GAUSSFIT_N_ITERATIONS = 500
+    GAUSSFIT_LOSS_THRESH = 1e-2
 
     def __init__(self, model, amplitude, rf_w, rf_h, n_timesteps, dt, thetas=None, spatial_freqs=None, temporal_freqs=None,
                  amplitudes_init=None, offsets_init=None, n_iterations=None, loss_threshold=None):
@@ -83,6 +85,7 @@ class GratingsProber:
         ])
         theta = torch.Tensor([theta]).expand_as(y)
         spatial_freq = torch.Tensor([spatial_freq]).expand_as(y)
+
         time = torch.arange(n_timesteps).view(n_timesteps, 1, 1).repeat(1, rf_h, rf_w)
 
         rotx = x * torch.cos(theta) - y * torch.sin(theta)
@@ -128,7 +131,7 @@ class GratingsProber:
             (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq) &
             (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq)
         ]
-        max_response_by_theta = tuning_curve.sort_values(by=['theta'])
+        max_response_by_theta = max_response_by_theta.sort_values(by=['theta'])
         
         theta = max_response_by_theta[['theta']].to_numpy().flatten()
         tuning_curve = max_response_by_theta[['model_output']].to_numpy().flatten()
@@ -146,16 +149,20 @@ class GratingsProber:
 
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
 
+        # Absolute orthogonal to preferred
         orthogonal_orientation = (self.preferred_orientation + np.pi/2) % 2*np.pi
+        # Nearest angle to that actually probed
+        nearest_orthogonal_orientation_idx = np.abs(self.thetas - orthogonal_orientation).argmin()
+        nearest_orthogonal_orientation = self.thetas[nearest_orthogonal_orientation_idx]
 
         orthogonal_orientation_response = self.grating_results[
-            (self.grating_results["theta"] == orthogonal_orientation) &
+            (self.grating_results["theta"] == nearest_orthogonal_orientation) &
             (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq) &
             (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq)
-        ]["model_output"]
+        ]["model_output"].values[0]
 
-        return (self.preferred_model_output - orthogonal_orientation_response) /
-                (self.preferred_model_output + orthogonal_orientation_response)
+        return ((self.preferred_model_output - orthogonal_orientation_response) /
+                (self.preferred_model_output + orthogonal_orientation_response))
 
     @property
     def direction_selectivity_index(self):
@@ -167,17 +174,21 @@ class GratingsProber:
         """
 
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
-
+        
+        # Absolute opposite to preferred
         opposite_direction = (self.preferred_direction + np.pi) % 2*np.pi
+        # Nearest angle to that actually probed
+        nearest_opposite_orientation_idx = np.abs(self.thetas - opposite_direction).argmin()
+        nearest_opposite_orientation = self.thetas[nearest_opposite_orientation_idx]
 
         opposite_direction_response = self.grating_results[
-            (self.grating_results["theta"] == opposite_direction) &
+            (self.grating_results["theta"] == nearest_opposite_orientation) &
             (self.grating_results["temporal_frequency"] == self.preferred_temporal_freq) &
             (self.grating_results["spatial_frequency"] == self.preferred_spatial_freq)
-        ]["model_output"]
+        ]["model_output"].values[0]
 
-        return (self.preferred_model_output - orthogonal_orientation_response) /
-                (self.preferred_model_output + orthogonal_orientation_response)
+        return ((self.preferred_model_output - opposite_direction_response) /
+                (self.preferred_model_output + opposite_direction_response))
 
     @property
     def circular_variance(self):
@@ -221,18 +232,31 @@ class GratingsProber:
 
         theta, tuning_curve = self.orientation_tuning_curve
 
-        def gauss(x, *p):
-            A, mu, variance = p
-            return A*np.exp(-(x-mu)**2/(2*variance))
+        # Average over 0-180 and 180-360 degrees
+        orient_n = len(theta)//2
+        orient_curve = (tuning_curve[:orient_n] + tuning_curve[:orient_n])/2
+        orient_theta = theta[:orient_n]
 
-        coeff, _ = curve_fit(
-            gauss,
-            theta,
-            tuning_curve,
-            p0=[np.max(tuning_curve), theta[np.argmax(tuning_curve)], 1]
+        # Determine shift to bring peak into 'centre' for fitting
+        # and rotate tuning curve by that shift
+        shift = math.ceil(len(orient_curve)/2) - (np.argmax(orient_curve)+1)
+        orient_curve_deque = collections.deque(orient_curve)
+        orient_curve_deque.rotate(shift)
+        orient_curve_rot = np.array(orient_curve_deque)
+
+        loss, amplitude, mean, variance = GaussianFitter.fit_gaussian(
+            xdata=orient_theta,
+            ydata=orient_curve_rot,
+            amplitude_init=max(orient_curve_rot),
+            mean_init=orient_theta[np.argmax(orient_curve_rot)],
+            variance_init=np.var(orient_curve_rot),
+            n_iterations=self.GAUSSFIT_N_ITERATIONS
         )
 
-        return math.sqrt(2*math.log(2)) * math.sqrt(coeff[2])
+        assert loss < self.GAUSSFIT_LOSS_THRESH, \
+               'Could not determine orientation bandwidth. Gaussian fit min loss={0} did not meet threshold criteria {1}.'.format(loss, self.GAUSSFIT_LOSS_THRESH)
+
+        return math.sqrt(2*math.log(2)) * math.sqrt(variance)
 
     @property
     def modulation_ratio(self):
@@ -265,6 +289,30 @@ class GratingsProber:
 #     def best_fix_spatial_freq(self):
 #         raise NotImplementedError
 
+class GaussianFitter:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def fit_gaussian(xdata, ydata, amplitude_init, mean_init, variance_init, n_iterations):
+        x, y = torch.Tensor(xdata), torch.Tensor(ydata)
+
+        amplitude = nn.Parameter(data=torch.Tensor([amplitude_init]), requires_grad=True)
+        mean = nn.Parameter(data=torch.Tensor([mean_init]), requires_grad=True)
+        variance = nn.Parameter(data=torch.Tensor([variance_init]), requires_grad=True)
+
+        optimizer = torch.optim.Adam([amplitude, mean, variance], 10 ** -2)
+
+        def predicted_gaussian():
+            return amplitude * torch.exp(-(x-mean)**2 / (2*variance))
+
+        for _ in range(n_iterations):
+            optimizer.zero_grad()
+            loss = F.mse_loss(predicted_gaussian(), y)
+            loss.backward()
+            optimizer.step()
+
+        return loss.detach().item(), amplitude.detach().item(), mean.detach().item(), variance.detach().item()
 
 class SinusoidFitter:
 
