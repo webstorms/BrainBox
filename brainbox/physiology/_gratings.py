@@ -120,11 +120,32 @@ class GratingsProber:
 
     @property
     def preferred_model_output(self):
+        """
+        Maximum model output over all probed grating parameters 
+
+        Returns
+        -------
+        output : numpy.float64
+            Preferred model output
+        """
+
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
         return self.grating_results['model_output'].max()
 
     @property
     def orientation_tuning_curve(self):
+        """
+        Orientation tuning curve (response as a function of grating orientation) for the preferred
+        spatial frequency and temporal frequency
+
+        Returns
+        -------
+        theta : ndarray
+            Tuning curve orientations in radians
+        tuning_curve : ndarray
+            Model response at each orientation in `theta`
+        """
+
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
 
         max_response_by_theta = self.grating_results[
@@ -141,10 +162,13 @@ class GratingsProber:
     @property
     def orientation_selectivity_index(self):
         """
-        Marques T, Nguyen J, Fioreze G, Petreanu L (2018)
-        The functional organization of cortical feedback
-        inputs to primary visual cortex. Nature Neuro-
-        science 21:757–764.
+        Orientation selectivity index, computed as 
+        $OSI=\frac{{R}_{pref}^{Or}-{R}_{orth}^{Or}}{{R}_{pref}^{Or}+{R}_{orth}^{Or}}$ (Marques, Nguyen, Fioreze & Petreanu, 2018)
+
+        Returns
+        -------
+        osi : numpy.float64
+            Orientation selectivity index
         """
 
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
@@ -167,10 +191,13 @@ class GratingsProber:
     @property
     def direction_selectivity_index(self):
         """
-        Marques T, Nguyen J, Fioreze G, Petreanu L (2018)
-        The functional organization of cortical feedback
-        inputs to primary visual cortex. Nature Neuro-
-        science 21:757–764.
+        Direction selectivity index, computed as 
+        $DSI=\frac{{R}_{pref}^{Dir}-{R}_{opp}^{Dir}}{{R}_{pref}^{Dir}+{R}_{opp}^{Dir}}$ (Marques, Nguyen, Fioreze & Petreanu, 2018)
+
+        Returns
+        -------
+        dsi : numpy.float64
+            Direction selectivity index
         """
 
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
@@ -193,11 +220,15 @@ class GratingsProber:
     @property
     def circular_variance(self):
         """
-            Singer Y, Willmore BD, King AJ, Harper NS (2019)
-            Hierarchical temporal prediction captures motion
-            processing from retina to higher visual cortex.
-            BioRxiv p. 575464.
+        Circular variance, computed as 
+        $CV= 1 - \frac{\sqrt{ (\sum_{q}^{Q}r_q\sin{2\theta_q})^2 + (\sum_{q}^{Q}r_q\cos{2\theta_q})^2}}{\sum_{q}^{Q}r_q}$ (Singer, Willmore, King & Harper, 2019)
+
+        Returns
+        -------
+        cv : numpy.float64
+            Circular variance
         """
+
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'
 
         theta, tuning_curve = self.orientation_tuning_curve
@@ -219,13 +250,15 @@ class GratingsProber:
     @property
     def orientation_bandwidth(self):
         """
-            Bandwidth describe using half-width at half-maximum
-            of Gaussian fit to tuning curve
+        Orientation bandwith, described using the halfwidth at the halfmaximum of
+        the orientation tuning curve's fitted Gaussian.
 
-            Jeon BB, Swain AD, Good JT, et al. (2018)
-            Feature selectivity is stable in primary
-            visual cortex across a range of spatial frequencies.
-            Sci Rep 8, 15288
+        $BW=\sqrt{2\ln{2}\sigma}$ (Jeon, Swain, Good Chase & Kuhlman, 2018)
+
+        Returns
+        -------
+        bw : numpy.float64
+            Orientation bandwidth
         """
 
         assert self.grating_results is not None, 'The model needs to be probed before calling this function.'

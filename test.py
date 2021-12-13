@@ -31,6 +31,4 @@ gratingsProber.grating_results = pd.read_pickle('./gratings.pickle')
 #gratingsProber.grating_results.to_pickle('./gratings.pickle')
 
 #print('orientation bw', gratingsProber.orientation_bandwidth)
-print('osi', gratingsProber.orientation_selectivity_index)
-print('dsi', gratingsProber.direction_selectivity_index)
-print('cv', gratingsProber.circular_variance)
+print(gratingsProber.preferred_model_output, type(gratingsProber.preferred_model_output))
