@@ -323,9 +323,7 @@ class GratingsProber:
 #         raise NotImplementedError
 
 class GaussianFitter:
-    def __init__(self):
-        pass
-
+    
     @staticmethod
     def fit_gaussian(xdata, ydata, amplitude_init, mean_init, variance_init, n_iterations):
         x, y = torch.Tensor(xdata), torch.Tensor(ydata)
