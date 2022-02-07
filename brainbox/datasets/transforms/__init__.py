@@ -1,4 +1,4 @@
-from ._transforms import Compose, ClipNormalize, ClipGrayscale, ClipColorfy, GaussianKernel, ClipResize, ClipBound, ClipResize, ClipCrop, ImgToClip
+from ._transforms import BBTransform, Compose, ClipNormalize, ClipGrayscale, ClipColorfy, GaussianKernel, ClipResize, ClipBound, ClipResize, ClipCrop, ImgToClip, RandomHorizontalFlipClip
 
-__all__ = ['Compose', 'ClipNormalize', 'ClipGrayscale', 'ClipColorfy', 'GaussianKernel', 'ClipResize', 'ClipBound', 'ClipResize', 'ClipCrop', 'ImgToClip']
+__all__ = ['BBTransform', 'Compose', 'ClipNormalize', 'ClipGrayscale', 'ClipColorfy', 'GaussianKernel', 'ClipResize', 'ClipBound', 'ClipResize', 'ClipCrop', 'ImgToClip', 'RandomHorizontalFlipClip']
 

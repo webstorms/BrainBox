@@ -12,9 +12,11 @@ class BBCWild(PredictionTemporalDataset):
     _N_TEST_CLIPS = 203
     _CLIP_LEN = 50
 
-    def __init__(self, root, t_len, dt, resample_step=1, pred_horizon=1, train=True, transform=None, target_transform=None):
+    # sample_length, dt, n_clips, n_timesteps, pred_horizon, transform=None, target_transform=None
+
+    def __init__(self, root, sample_length, dt, pred_horizon=1, train=True, transform=None, target_transform=None):
         n_clips = BBCWild._N_TRAIN_CLIPS if train else BBCWild._N_TEST_CLIPS
-        super().__init__(t_len, dt, n_clips, BBCWild._CLIP_LEN, resample_step, pred_horizon, transform,
+        super().__init__(sample_length, dt, n_clips, BBCWild._CLIP_LEN, pred_horizon, transform,
                          target_transform)
         self.root = root
 
@@ -32,11 +34,12 @@ class BBCWild(PredictionTemporalDataset):
         self.dataset = self.dataset.unsqueeze(1)
         self.dataset = self.dataset.type(torch.FloatTensor)
 
-    def load_clip(self, i):
+    def load_clips(self, i):
         x = self.dataset[i]
 
         return x
 
     @property
     def model_outputs_path(self):
-        return os.path.join(self.root, 'preprocessed_dataset.pkl')
+        return os.path.join(self.root, 'normalized_concattrain.pkl')
+        # return os.path.join(self.root, 'preprocessed_dataset.pkl')

@@ -4,103 +4,81 @@ import torch
 class BBDataset(torch.utils.data.Dataset):
 
     def __init__(self, transform=None, target_transform=None):
-        self.transform = transform
-        self.target_transform = target_transform
-    
-    @staticmethod
-    def _append_prefix_to_hyperparams(prefix, hyperparams):
-        return {'_'.join([prefix, key]): value for key, value in hyperparams.items()}
+        self._transform = transform
+        self._target_transform = target_transform
 
     @property
     def hyperparams(self):
-
         hyperparams = {'name': self.__class__.__name__}
 
-        if self.transform is not None:
-            transform_hyperparams = BBDataset._append_prefix_to_hyperparams('trans', self.transform.hyperparams)
-            hyperparams = {**hyperparams, **transform_hyperparams}
-        if self.target_transform is not None:
-            target_transform_hyperparams = BBDataset._append_prefix_to_hyperparams('targ_trans', self.target_transform.hyperparams)
-            hyperparams = {**hyperparams, **target_transform_hyperparams}
+        if self._transform is not None:
+            hyperparams['transform'] = self._transform.hyperparams
+
+        if self._target_transform is not None:
+            hyperparams['target_transform'] = self._target_transform.hyperparams
 
         return hyperparams
 
 
 class TemporalDataset(BBDataset):
 
-    def __init__(self, t_len, dt, n_clips, n_timesteps, transform=None, target_transform=None):
+    def __init__(self, sample_length, dt, n_clips, clip_length, transform=None, target_transform=None):
         super().__init__(transform, target_transform)
-        assert t_len <= n_timesteps, 't_len {0} needs to be less or equal to n_timesteps {1}'.format(t_len, n_timesteps)
+        assert sample_length <= clip_length, f'sample_length {sample_length} needs to be less or equal to n_timesteps {clip_length}'
+        self._sample_length = sample_length
+        self._dt = dt
+        self._n_clips = n_clips
+        self._clip_length = clip_length
 
-        self.t_len = t_len
-        self.dt = dt
-
-        self.ids = []
+        self._ids = []
         for clip_id in range(n_clips):
-            for t_id in range(0, n_timesteps - t_len + 1, dt):
-                self.ids.append((clip_id, t_id))
+            for t_id in range(0, clip_length - sample_length + 1, dt):
+                self._ids.append((clip_id, t_id))
 
     @property
     def hyperparams(self):
-        return {**super().hyperparams, 't_len': self.t_len, 'dt': self.dt}
+        return {**super().hyperparams, 'sample_length': self._sample_length, 'dt': self._dt, 'n_clips': self._n_clips, 'clip_length': self._clip_length}
 
-    def load_clip(self, i):
+    def load_clips(self, i):
         # x: channel x timesteps x ...
         # y: channel x timesteps x ...
         raise NotImplementedError
 
     def __getitem__(self, i):
-        clip_idx, t_idx = self.ids[i]
-        x, y = self.load_clip(clip_idx)
-        x = x[:, t_idx:t_idx + self.t_len]
-        y = y[:, t_idx:t_idx + self.t_len]
+        clip_id, t_id = self._ids[i]
+        x, y = self.load_clips(clip_id)
+        x = x[:, t_id:t_id + self._sample_length]
+        y = y[:, t_id:t_id + self._sample_length]
 
-        if self.transform is not None:
-            x = self.transform(x)
+        if self._transform is not None:
+            x = self._transform(x)
 
-        if self.target_transform is not None:
-            y = self.target_transform(y)
+        if self._target_transform is not None:
+            y = self._target_transform(y)
 
         return x, y
 
     def __len__(self):
-        return len(self.ids)
+        return len(self._ids)
 
 
 class PredictionTemporalDataset(TemporalDataset):
 
-    def __init__(self, t_len, dt, n_clips, n_timesteps, resample_step, pred_horizon, transform=None,
-                 target_transform=None):
-        n_timesteps = (n_timesteps - pred_horizon) // resample_step
-        super().__init__(t_len, dt, n_clips, n_timesteps, transform, target_transform)
-
-        self.resample_step = resample_step
-        self.pred_horizon = pred_horizon
+    def __init__(self, sample_length, dt, n_clips, clip_length, pred_horizon, transform=None, target_transform=None):
+        super().__init__(sample_length, dt, n_clips, clip_length - pred_horizon, transform, target_transform)
+        self._pred_horizon = pred_horizon
 
     @property
     def hyperparams(self):
-        return {**super().hyperparams, 'resample_step': self.resample_step, 'pred_horizon': self.pred_horizon}
+        return {**super().hyperparams, 'pred_horizon': self._pred_horizon}
 
-    def __getitem__(self, i):
-        clip_idx, t_idx = self.ids[i]
-        x = self.load_clip(clip_idx)
+    def load_clips(self, i):
+        clip = self.load_clip(i)
 
-        # 1. Shift
-        y = x[:, self.pred_horizon:]
-        x = x[:, :-self.pred_horizon]
-
-        # 2. Re-sample
-        y = y[:, 0:y.shape[1]:self.resample_step]
-        x = x[:, 0:x.shape[1]:self.resample_step]
-
-        x = x[:, t_idx:t_idx + self.t_len]
-        y = y[:, t_idx:t_idx + self.t_len]
-
-        if self.transform is not None:
-            x = self.transform(x)
-
-        if self.target_transform is not None:
-            y = self.target_transform(y)
+        x = clip[:, :-self.pred_horizon]
+        y = clip[:, self.pred_horizon:]
 
         return x, y
 
+    def load_clip(self, i):
+        raise NotImplementedError

@@ -3,7 +3,16 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class Compose:
+class BBTransform:
+
+    @property
+    def hyperparams(self):
+        hyperparams = {'name': self.__class__.__name__}
+
+        return hyperparams
+
+
+class Compose(BBTransform):
 
     def __init__(self, transforms):
         self.transforms = transforms
@@ -16,14 +25,12 @@ class Compose:
 
     @property
     def hyperparams(self):
-        hyperparams = {}
-        for trans in self.transforms:
-            hyperparams = {**hyperparams, **trans.hyperparams}
+        hyperparams = {**super().hyperparams, 'transforms': [trans.hyperparams for trans in self.transforms]}
 
         return hyperparams
 
 
-class ClipNormalize:
+class ClipNormalize(BBTransform):
 
     def __init__(self, mean, std, inplace=False):
         self.mean = mean
@@ -44,10 +51,12 @@ class ClipNormalize:
 
     @property
     def hyperparams(self):
-        return {'clip_normalize': {'mean': self.mean, 'std': self.std}}
+        hyperparams = {**super().hyperparams, 'mean': self.mean, 'std': self.std}
+
+        return hyperparams
 
 
-class ClipGrayscale:
+class ClipGrayscale(BBTransform):
 
     def __call__(self, clip):
         r, g, b = clip.unbind(dim=0)
@@ -55,23 +64,15 @@ class ClipGrayscale:
 
         return clip
 
-    @property
-    def hyperparams(self):
-        return {'clip_grayscale': {}}
 
-
-class ClipColorfy:
+class ClipColorfy(BBTransform):
 
     def __call__(self, clip):
 
         return clip.repeat(3, 1, 1, 1)
 
-    @property
-    def hyperparams(self):
-        return {'clip_colorfy': {}}
 
-
-class GaussianKernel:
+class GaussianKernel(BBTransform):
 
     def __init__(self, sigma, width):
         assert width % 2 == 1, 'width needs to be an odd number'
@@ -92,10 +93,12 @@ class GaussianKernel:
 
     @property
     def hyperparams(self):
-        return {'gaussian_kernel': {'sigma': self.sigma, 'width': self.width}}
+        hyperparams = {**super().hyperparams, 'sigma': self.sigma, 'width': self.width}
+
+        return hyperparams
 
 
-class ClipResize:
+class ClipResize(BBTransform):
 
     def __init__(self, k, s, p):
         self.k = k
@@ -108,24 +111,28 @@ class ClipResize:
 
     @property
     def hyperparams(self):
-        return {'clip_resize': {'k': self.k, 's': self.s, 'p': self.p}}
+        hyperparams = {**super().hyperparams, 'k': self.k, 's': self.s, 'p': self.p}
+
+        return hyperparams
 
 
-class ClipBound:
+class ClipBound(BBTransform):
 
     def __init__(self, vmin, vmax):
         self.vmin = vmin
         self.vmax = vmax
 
     def __call__(self, clip):
-        return torch.clamp(clip, min=sef.vmin, max=self.vmax)
+        return torch.clamp(clip, min=self.vmin, max=self.vmax)
 
     @property
     def hyperparams(self):
-        return {'clip_bound': {'vmin': self.vmin, 'vmax': self.vmax}}
+        hyperparams = {**super().hyperparams, 'vmin': self.vmin, 'vmax': self.vmax}
+
+        return hyperparams
 
 
-class ClipCrop:
+class ClipCrop(BBTransform):
 
     def __init__(self, h, w):
         self.h = h
@@ -141,10 +148,12 @@ class ClipCrop:
 
     @property
     def hyperparams(self):
-        return {'clip_crop': {'h': self.h, 'w': self.w}}
+        hyperparams = {**super().hyperparams, 'h': self.h, 'w': self.w}
+
+        return hyperparams
 
 
-class ImgToClip:
+class ImgToClip(BBTransform):
 
     def __init__(self, pre_blanks, repeats, post_blanks):
         self.pre_blanks = pre_blanks
@@ -166,5 +175,15 @@ class ImgToClip:
 
     @property
     def hyperparams(self):
-        return {'img_to_clip': {'pre_blanks': self.pre_blanks, 'repeats': self.repeats, 'post_blanks': self.post_blanks}}
+        hyperparams = {**super().hyperparams, 'pre_blanks': self.pre_blanks, 'repeats': self.repeats, 'post_blanks': self.post_blanks}
 
+        return hyperparams
+
+
+class RandomHorizontalFlipClip(BBTransform):
+
+    def __call__(self, clip):
+        if torch.rand(1).item() > 0.5:
+            return torch.flip(clip, dims=(3,))
+        else:
+            return clip
