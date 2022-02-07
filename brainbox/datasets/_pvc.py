@@ -141,9 +141,9 @@ class PVC1Dataset(TemporalDataset):
             'test': [(1, 14), (1, 20), (0, 2), (3, 16), (2, 18), (1, 25), (3, 5), (0, 5), (0, 3), (0, 19), (1, 26), (0, 16), (2, 16), (3, 24), (0, 27), (2, 13), (1, 0), (0, 9), (0, 7), (3, 4), (3, 11), (0, 29)]}
     }
 
-    def __init__(self, root, trial_type, fold_type, t_len, dt, transform=None, target_transform=None):
+    def __init__(self, root, trial_type, fold_type, sample_length, dt, transform=None, target_transform=None):
         n_clips = len(PVC1Dataset._TRIAL_FOLD_MOVIE_IDS[trial_type][fold_type])
-        super().__init__(t_len, dt, n_clips, PVC1Dataset._MAX_FRAMES, transform, target_transform)
+        super().__init__(sample_length, dt, n_clips, PVC1Dataset._MAX_FRAMES, transform, target_transform)
         assert trial_type in [PVC1Dataset.TRIAL_SINGLE, PVC1Dataset.TRIAL_MULTI], 'Please provide a valid response type.'
         assert fold_type in [PVC1Dataset.FOLD_TRAIN, PVC1Dataset.FOLD_VAL, PVC1Dataset.FOLD_TEST], 'Please provide a valid fold type.'
         self.root = root
@@ -164,7 +164,7 @@ class PVC1Dataset(TemporalDataset):
     def hyperparams(self):
         return {**super().hyperparams, 'trial_type': self.trial_type, 'fold_type': self.fold_type}
 
-    def load_clip(self, i):
+    def load_clips(self, i):
         x = self.movies[i]
         y = self.neural_responses[i].mean(0).unsqueeze(0)
 

@@ -1,15 +1,22 @@
 import os
+import sys
 import glob
 import uuid
+import json
+import logging
+import time
 from datetime import datetime
 
 import torch
 import numpy as np
 import pandas as pd
 
+logger = logging.getLogger('trainer')
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
 
 class Trainer:
-    
+
     GRAD_VALUE_CLIP_PRE = 'GRAD_VALUE_CLIP_PRE'
     GRAD_VALUE_CLIP_POST = 'GRAD_VALUE_CLIP_POST'
     GRAD_NORM_CLIP = 'GRAD_NORM_CLIP'
@@ -34,12 +41,12 @@ class Trainer:
         # Instantiate housekeeping variables
         self.id = str(uuid.uuid4().hex)
         self.log = {'train_loss': []}
-        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size, shuffle=False)  # TODO: Set shuffle as hyperparam
+        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size, shuffle=False, pin_memory=False)  # TODO: Set shuffle as hyperparam
 
         if self.dtype == torch.float:
-            self.optimizer = self.optimizer_func(self.model.parameters(), 10 ** self.lr)
+            self.optimizer = self.optimizer_func(self.model.parameters(), self.lr)
         elif self.dtype == torch.half:
-            self.optimizer = self.optimizer_func(self.model.parameters(), 10 ** self.lr, eps=1e-4)
+            self.optimizer = self.optimizer_func(self.model.parameters(), self.lr, eps=1e-4)
 
         # Register grad clippings
         if self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_PRE:
@@ -54,38 +61,29 @@ class Trainer:
         elif dtype == torch.half:
             self.model = self.model.half()
         self.model.train()
-
-        self.date = datetime.today().strftime('%Y%m%d')
-
-    @property
-    def name(self):
-        return '{0}_{1}'.format(self.date, self.id)
-
-    @staticmethod
-    def _append_prefix_to_hyperparams(prefix, hyperparams):
-        return {'_'.join([prefix, key]): value for key, value in hyperparams.items()}
+        self.date = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 
     @property
     def hyperparams(self):
-        return {'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': self.dtype, 'grad_clip_type': self.grad_clip_type, 'grad_clip_value': self.grad_clip_value}
+        hyperparams = {
+            'trainer': {'date': self.date, 'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': str(self.dtype), 'grad_clip_type': self.grad_clip_type, 'grad_clip_value': self.grad_clip_value},
+            'dataset': self.train_dataset.hyperparams,
+            'model': self.model.hyperparams
+        }
+
+        return hyperparams
 
     @property
     def model_path(self):
-        name = '{0}_{1}'.format(self.name, 'model.pt')
-
-        return os.path.join(self.root, name)
+        return os.path.join(self.root, self.id, 'model.pt')
 
     @property
-    def model_hyperparams_path(self):
-        name = '{0}_{1}'.format(self.name, 'hyperparams.csv')
-
-        return os.path.join(self.root, name)
+    def hyperparams_path(self):
+        return os.path.join(self.root, self.id, 'hyperparams.json')
 
     @property
-    def model_log_path(self):
-        name = '{0}_{1}'.format(self.name, 'log.csv')
-
-        return os.path.join(self.root, name)
+    def log_path(self):
+        return os.path.join(self.root, self.id, 'log.csv')
 
     def save_model(self):
         if self.save_type == Trainer.SAVE_OBJECT:
@@ -94,22 +92,14 @@ class Trainer:
             torch.save(self.model.state_dict(), self.model_path)
 
     def save_hyperparams(self):
-        dataset_hyperparams = Trainer._append_prefix_to_hyperparams('dataset', self.train_dataset.hyperparams)
-        train_hyperparams = Trainer._append_prefix_to_hyperparams('train', self.hyperparams)
-        model_hyperparams = Trainer._append_prefix_to_hyperparams('model', self.model.hyperparams)
-
-        hyperparams = {**dataset_hyperparams, **train_hyperparams, **model_hyperparams}
-        hyperparams = pd.Series(hyperparams)
-        hyperparams.to_csv(self.model_hyperparams_path, index=True)
+        with open(self.hyperparams_path, 'w', encoding='utf-8') as f:
+            json.dump(self.hyperparams, f, ensure_ascii=False, indent=4)
 
     def save_model_log(self):
         log_df = pd.DataFrame(self.log)
-        log_df.to_csv(self.model_log_path, index=False)
+        log_df.to_csv(self.log_path, index=False)
 
     def loss(self, output, target, model):
-        raise NotImplementedError
-
-    def val_loss(self, output, target, model):
         raise NotImplementedError
 
     def on_epoch_complete(self, save):
@@ -124,32 +114,37 @@ class Trainer:
         if save:
             self.save_model()
 
-    def compute_metric_per_batch(self, metric):
-        metric_list = []
-
-        with torch.no_grad():
-            for data, target in self.train_data_loader:
-                data = data.to(self.device).type(self.dtype)
-                target = target.to(self.device).type(self.dtype)
-                output = self.model(data)
-                metric_value = metric(output, target, self.model)
-                metric_list.append(metric_value)
-
-        return metric_list
-
     def train_for_single_epoch(self):
-
         epoch_loss = 0
 
+        end_time = 0
+        start_time = 0
         for batch_id, (data, target) in enumerate(self.train_data_loader):
+            end_time = time.time()
+            # print('load step', end_time - start_time)
+
+            start_time = time.time()
+
             data = data.to(self.device).type(self.dtype)
             target = target.to(self.device).type(self.dtype)
+            end_time = time.time()
+            # print('data', end_time - start_time)
+            start_time = time.time()
 
             self.optimizer.zero_grad()
             output = self.model(data)
+            end_time = time.time()
+            # print('model forward', end_time - start_time)
+            start_time = time.time()
             loss = self.loss(output, target, self.model)
+            end_time = time.time()
+            # print('loss', end_time - start_time)
+            start_time = time.time()
             epoch_loss += loss.item()
             loss.backward()
+            torch.cuda.synchronize()
+            end_time = time.time()
+            # print('back', end_time - start_time)
 
             if self.grad_clip_type is not None:
 
@@ -159,19 +154,24 @@ class Trainer:
                 elif self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_POST:
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), self.grad_clip_value)
 
+            start_time = time.time()
             self.optimizer.step()
+            end_time = time.time()
+            # print('opt step', end_time - start_time)
+            start_time = time.time()
 
         return epoch_loss / (batch_id + 1)
 
     def train(self, save=False):
+        if save:
+            os.mkdir(os.path.join(self.root, self.id))
 
         self.on_training_start(save)
 
         for epoch in range(self.n_epochs):
-            print('Starting epoch {0}...'.format(epoch))
             # Train the model
             epoch_loss = self.train_for_single_epoch()
-            print('epoch_loss', epoch_loss)
+            logger.info(f'Completed epoch {epoch} with loss {epoch_loss}')
             self.log['train_loss'].append(epoch_loss)
 
             self.on_epoch_complete(save)
@@ -179,123 +179,8 @@ class Trainer:
         self.on_training_complete(save)
 
 
-class DecayTrainer(Trainer):
-
-    def __init__(self, root, model, train_dataset, val_dataset, n_epochs, batch_size, lr, lr_decay=0.5, max_train_steps=10, max_decay_steps=4, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type=Trainer.SAVE_OBJECT):
-        super().__init__(root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func, device, dtype, grad_clip_type, grad_clip_value, save_type)
-        self.val_dataset = val_dataset
-        self.lr_decay = lr_decay
-        self.max_train_steps = max_train_steps
-        self.max_decay_steps = max_decay_steps
-
-        self.val_data_loader = torch.utils.data.DataLoader(val_dataset, self.batch_size)
-        self.log = {'train_loss': [], 'val_loss': []}
-        self.min_val_loss = np.inf
-        self.train_steps_counter = 0
-        self.decay_steps_counter = 0
-        self._lr = 10 ** lr
-
-    @property
-    def hyperparams(self):
-        return {**super().hyperparams, 'lr_decay': self.lr_decay, 'max_train_steps': self.max_train_steps, 'max_decay_steps': self.max_decay_steps}
-
-    def save_hyperparams(self):
-        train_dataset_hyperparams = Trainer._append_prefix_to_hyperparams('train_dataset', self.train_dataset.hyperparams)
-        val_dataset_hyperparams = Trainer._append_prefix_to_hyperparams('val_dataset', self.val_dataset.hyperparams)
-        train_hyperparams = Trainer._append_prefix_to_hyperparams('train', self.hyperparams)
-        model_hyperparams = Trainer._append_prefix_to_hyperparams('model', self.model.hyperparams)
-
-        hyperparams = {**train_dataset_hyperparams, **val_dataset_hyperparams, **train_hyperparams, **model_hyperparams}
-        hyperparams = pd.Series(hyperparams)
-        hyperparams.to_csv(self.model_hyperparams_path, index=True)
-
-    def on_epoch_complete(self, save):
-
-        val_loss = self.get_total_val_loss()
-        self.log['val_loss'].append(val_loss)
-        if save:
-            self.save_model_log()
-
-        print('Train loss', self.log['train_loss'][-1])
-        print('Val loss', self.log['val_loss'][-1])
-
-        if val_loss < self.min_val_loss:
-            self.min_val_loss = val_loss
-            self.train_steps_counter = 0
-
-            if save:
-                self.save_model()
-
-        else:
-            self.train_steps_counter += 1
-
-            # We decay the learning rate if we have reached the specified number of training steps
-            # and have not obtained any improvement in the validation loss
-            if self.train_steps_counter == self.max_train_steps:
-
-                # Decay the lr
-                print('Decaying the lr... {0}/{1}'.format(self.decay_steps_counter + 1, self.max_decay_steps))
-                self.train_steps_counter = 0
-                self.decay_steps_counter += 1
-                self._lr *= self.lr_decay
-
-                # Load the best model and re-instantiated the optimizer
-                if save:
-                    self.model = torch.load(self.model_path)
-
-                if self.dtype == torch.float:
-                    self.optimizer = self.optimizer_func(self.model.parameters(), self._lr)
-                elif self.dtype == torch.half:
-                    self.optimizer = self.optimizer_func(self.model.parameters(), self._lr, eps=1e-4)
-
-    def on_training_start(self, save):
-        if save:
-            self.save_model()
-            self.save_hyperparams()
-
-    def on_training_complete(self, save):
-        pass
-
-    def get_total_val_loss(self):
-        self.model.eval()
-
-        total_loss = 0
-
-        with torch.no_grad():
-            for batch_id, (data, target) in enumerate(self.val_data_loader):
-                data = data.to(self.device).type(self.dtype)
-                target = target.to(self.device).type(self.dtype)
-
-                output = self.model(data)
-                total_loss += self.val_loss(output, target, self.model).item()
-
-        self.model.train()
-
-        return total_loss
-
-    def train(self, save=False):
-
-        self.on_training_start(save)
-
-        for epoch in range(self.n_epochs):
-            print('Starting epoch {0}...'.format(epoch))
-            # Train the model
-            epoch_loss = self.train_for_single_epoch()
-
-            self.log['train_loss'].append(epoch_loss)
-
-            self.on_epoch_complete(save)
-
-            # Halt the training process if we have reached the maximum number of lr decay steps
-            if self.decay_steps_counter > self.max_decay_steps:
-                print('Training stopped.')
-                return
-
-        self.on_training_complete(save)
-
-
-def get_trainer(trainer_class, loss_function, *args):
-    model_trainer = trainer_class(*args)
+def get_trainer(trainer_class, loss_function, **kwargs):
+    model_trainer = trainer_class(**kwargs)
     model_trainer.loss = loss_function
 
     return model_trainer
