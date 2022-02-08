@@ -85,7 +85,7 @@ def get_isi_cvs(isi_distributions, thresh_n):
     for i in range(n_neurons):
         neuron_isis = isi_distributions[i]
         if len(neuron_isis) >= thresh_n:
-            isi_cv = neuron_isis.std() / neuron_isis.mean()
+            isi_cv = neuron_isis._std() / neuron_isis._mean()
             isi_cvs.append(isi_cv)
         else:
             isi_cvs.append(0)
@@ -99,7 +99,7 @@ def get_firing_rate_distributions(model, bin_dt, dataset, batch_size, max_batch=
 
     def process_batch(model_output):
         # model_output: n_neurons x n_timesteps
-        firing_rates = model_output.mean(dim=-1)
+        firing_rates = model_output._mean(dim=-1)
 
         for i in range(len(firing_rates)):
             results[i].append(firing_rates[i].item() * (1000 / bin_dt))
@@ -143,7 +143,7 @@ def get_mean_firing_rates(firing_rate_distributions):
     for i in range(n_neurons):
         neuron_firing_rates = firing_rate_distributions[i]
 
-        mean_firing_rates.append(neuron_firing_rates.mean())
+        mean_firing_rates.append(neuron_firing_rates._mean())
 
     return np.array(mean_firing_rates)
 

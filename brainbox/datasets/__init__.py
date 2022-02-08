@@ -1,5 +1,4 @@
-from ._dataset import BBDataset, TemporalDataset, PredictionTemporalDataset
-from ._pvc import PVC1Dataset
-from ._bbc_wildlife import BBCWild
-from ._lukenat import Natural, MouseNat, HumanNat
+from .base import BBDataset, TemporalDataset, PredictionTemporalDataset
+from brainbox.datasets.implementations.singer import BBCWild
+from brainbox.datasets.implementations.taylor import Natural, MouseNat, HumanNat
 
