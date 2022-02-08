@@ -35,15 +35,6 @@ class TemporalDataset(BBDataset):
             for t_id in range(0, clip_length - sample_length + 1, dt):
                 self._ids.append((clip_id, t_id))
 
-    @property
-    def hyperparams(self):
-        return {**super().hyperparams, 'sample_length': self._sample_length, 'dt': self._dt, 'n_clips': self._n_clips, 'clip_length': self._clip_length}
-
-    def load_clips(self, i):
-        # x: channel x timesteps x ...
-        # y: channel x timesteps x ...
-        raise NotImplementedError
-
     def __getitem__(self, i):
         clip_id, t_id = self._ids[i]
         x, y = self.load_clips(clip_id)
@@ -61,6 +52,15 @@ class TemporalDataset(BBDataset):
     def __len__(self):
         return len(self._ids)
 
+    @property
+    def hyperparams(self):
+        return {**super().hyperparams, 'sample_length': self._sample_length, 'dt': self._dt, 'n_clips': self._n_clips, 'clip_length': self._clip_length}
+
+    def load_clips(self, i):
+        # x: channel x timesteps x ...
+        # y: channel x timesteps x ...
+        raise NotImplementedError
+
 
 class PredictionTemporalDataset(TemporalDataset):
 
@@ -75,8 +75,8 @@ class PredictionTemporalDataset(TemporalDataset):
     def load_clips(self, i):
         clip = self.load_clip(i)
 
-        x = clip[:, :-self.pred_horizon]
-        y = clip[:, self.pred_horizon:]
+        x = clip[:, :-self._pred_horizon]
+        y = clip[:, self._pred_horizon:]
 
         return x, y
 
