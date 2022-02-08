@@ -3,13 +3,20 @@ import torch
 
 class BBDataset(torch.utils.data.Dataset):
 
-    def __init__(self, transform=None, target_transform=None):
+    def __init__(self, root, train=True, preprocess=None, transform=None, target_transform=None):
+        self._root = root
+        self._train = train
         self._transform = transform
         self._target_transform = target_transform
 
+        self._dataset = self._load_dataset(train)
+
+        if preprocess is not None:
+            self._dataset = preprocess(self._dataset)
+
     @property
     def hyperparams(self):
-        hyperparams = {'name': self.__class__.__name__}
+        hyperparams = {'name': self.__class__.__name__, 'train': self._train}
 
         if self._transform is not None:
             hyperparams['transform'] = self._transform.hyperparams
@@ -19,11 +26,14 @@ class BBDataset(torch.utils.data.Dataset):
 
         return hyperparams
 
+    def _load_dataset(self, train):
+        raise NotImplementedError
+
 
 class TemporalDataset(BBDataset):
 
-    def __init__(self, sample_length, dt, n_clips, clip_length, transform=None, target_transform=None):
-        super().__init__(transform, target_transform)
+    def __init__(self, root, sample_length, dt, n_clips, clip_length, train=True, preprocess=None, transform=None, target_transform=None):
+        super().__init__(root, train, preprocess, transform, target_transform)
         assert sample_length <= clip_length, f'sample_length {sample_length} needs to be less or equal to n_timesteps {clip_length}'
         self._sample_length = sample_length
         self._dt = dt
@@ -64,8 +74,8 @@ class TemporalDataset(BBDataset):
 
 class PredictionTemporalDataset(TemporalDataset):
 
-    def __init__(self, sample_length, dt, n_clips, clip_length, pred_horizon, transform=None, target_transform=None):
-        super().__init__(sample_length, dt, n_clips, clip_length - pred_horizon, transform, target_transform)
+    def __init__(self, root, sample_length, dt, n_clips, clip_length, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None):
+        super().__init__(root, sample_length, dt, n_clips, clip_length - pred_horizon, train, preprocess, transform, target_transform)
         self._pred_horizon = pred_horizon
 
     @property

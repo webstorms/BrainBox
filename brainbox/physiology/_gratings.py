@@ -55,7 +55,7 @@ class GratingsProber:
                         model_outputs = self.model(torch.stack(batch_gratings))
                         assert len(model_outputs.shape) == 2, 'Model output should be two-dimensional'
                         for i in range(len(model_outputs)):
-                            model_output_list.append(model_outputs[i].mean().item())
+                            model_output_list.append(model_outputs[i]._mean().item())
                         batch_counter = 0
                         batch_gratings = []
 
@@ -66,7 +66,7 @@ class GratingsProber:
         if len(batch_gratings) > 0:
             model_outputs = self.model(batch_gratings)
             for i in range(len(model_outputs)):
-                model_output_list.append(model_outputs[i].mean().item())
+                model_output_list.append(model_outputs[i]._mean().item())
 
         self.grating_results = pd.DataFrame({'theta': thetas_list,
                                              'spatial_frequency': spatial_freq_list,
@@ -135,7 +135,7 @@ class GratingsProber:
         phases_init = [0]
         frequency_init = [(2 * np.pi) * self.preferred_temporal_freq / (1000 // self.dt)]
         F1 = self.get_sinusoid_fit_to_response(model_output.flatten().detach(), self.amplitudes_init, phases_init, self.offsets_init, frequency_init, self.n_iterations, self.loss_threshold)[0]
-        F0 = model_output.mean().item()
+        F0 = model_output._mean().item()
 
         return F1 / F0
 

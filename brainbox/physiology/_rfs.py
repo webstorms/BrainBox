@@ -12,7 +12,7 @@ def get_highest_power_spatial_rf(spatiotemporal_rf):
     :return: A tensor of shape  rf_w x rf_h
     """
 
-    power_at_timesteps = torch.pow(spatiotemporal_rf, 2).mean(dim=(1, 2))
+    power_at_timesteps = torch.pow(spatiotemporal_rf, 2)._mean(dim=(1, 2))
     t = power_at_timesteps.argmax().item()
     spatial_rf = spatiotemporal_rf[t]
 
@@ -49,7 +49,7 @@ def get_temporal_power_profile(spatiotemporal_rfs):
     :return: A tensor of shape rf_len
     """
 
-    power_profile = torch.pow(spatiotemporal_rfs, 2).mean(dim=(2, 3)).mean(dim=0).detach().cpu().float()
+    power_profile = torch.pow(spatiotemporal_rfs, 2)._mean(dim=(2, 3))._mean(dim=0).detach().cpu().float()
     power_profile = power_profile / power_profile.sum()
 
     return power_profile
