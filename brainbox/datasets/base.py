@@ -3,7 +3,7 @@ import torch
 
 class BBDataset(torch.utils.data.Dataset):
 
-    def __init__(self, root, train=True, preprocess=None, transform=None, target_transform=None):
+    def __init__(self, root, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
         self._root = root
         self._train = train
         self._transform = transform
@@ -13,6 +13,9 @@ class BBDataset(torch.utils.data.Dataset):
 
         if preprocess is not None:
             self._dataset = preprocess(self._dataset)
+
+        if push_gpu:
+            self._dataset = self._dataset.cuda()
 
     @property
     def hyperparams(self):
@@ -32,8 +35,8 @@ class BBDataset(torch.utils.data.Dataset):
 
 class TemporalDataset(BBDataset):
 
-    def __init__(self, root, sample_length, dt, n_clips, clip_length, train=True, preprocess=None, transform=None, target_transform=None):
-        super().__init__(root, train, preprocess, transform, target_transform)
+    def __init__(self, root, sample_length, dt, n_clips, clip_length, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
+        super().__init__(root, train, preprocess, transform, target_transform, push_gpu)
         assert sample_length <= clip_length, f'sample_length {sample_length} needs to be less or equal to n_timesteps {clip_length}'
         self._sample_length = sample_length
         self._dt = dt
@@ -74,8 +77,8 @@ class TemporalDataset(BBDataset):
 
 class PredictionTemporalDataset(TemporalDataset):
 
-    def __init__(self, root, sample_length, dt, n_clips, clip_length, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None):
-        super().__init__(root, sample_length, dt, n_clips, clip_length - pred_horizon, train, preprocess, transform, target_transform)
+    def __init__(self, root, sample_length, dt, n_clips, clip_length, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
+        super().__init__(root, sample_length, dt, n_clips, clip_length - pred_horizon, train, preprocess, transform, target_transform, push_gpu)
         self._pred_horizon = pred_horizon
 
     @property

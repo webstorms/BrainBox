@@ -13,9 +13,9 @@ class Natural(PredictionTemporalDataset):
     _N_TEST_CLIPS = 8
     _CLIP_LENGTH = 1200
 
-    def __init__(self, root, sample_length, dt, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None):
+    def __init__(self, root, sample_length, dt, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
         n_clips = Natural._N_TRAIN_CLIPS if train else Natural._N_TEST_CLIPS
-        super().__init__(root, sample_length, dt, n_clips, Natural._CLIP_LENGTH, pred_horizon, train, preprocess, transform, target_transform)
+        super().__init__(root, sample_length, dt, n_clips, Natural._CLIP_LENGTH, pred_horizon, train, preprocess, transform, target_transform, push_gpu)
 
     @property
     def model_outputs_path(self):
@@ -47,9 +47,9 @@ class MouseNat(PredictionTemporalDataset):
     # filtered: m=1.1744,std=264.695
     # non-filtered: m=160.24, std=60.71
 
-    def __init__(self, root, sample_length, dt, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None):
+    def __init__(self, root, sample_length, dt, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
         n_clips = MouseNat._N_TRAIN_CLIPS if train else MouseNat._N_TEST_CLIPS
-        super().__init__(root, sample_length, dt, n_clips, MouseNat._CLIP_LENGTH, pred_horizon, train, preprocess, transform, target_transform)
+        super().__init__(root, sample_length, dt, n_clips, MouseNat._CLIP_LENGTH, pred_horizon, train, preprocess, transform, target_transform, push_gpu)
 
     @property
     def model_outputs_path(self):
@@ -84,9 +84,9 @@ class HumanNat(PredictionTemporalDataset):
     # filtered: m=0.75,std=324.89
     # non-filtered: m=155.01, std=55.39
 
-    def __init__(self, root, sample_length, dt, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None):
+    def __init__(self, root, sample_length, dt, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
         n_clips = HumanNat._N_TRAIN_CLIPS if train else HumanNat._N_TEST_CLIPS
-        super().__init__(root, sample_length, dt, n_clips, HumanNat._CLIP_LENGTH, pred_horizon, train, preprocess, transform, target_transform)
+        super().__init__(root, sample_length, dt, n_clips, HumanNat._CLIP_LENGTH, pred_horizon, train, preprocess, transform, target_transform, push_gpu)
 
     @property
     def model_outputs_path(self):

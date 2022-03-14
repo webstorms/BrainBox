@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 logger = logging.getLogger('trainer')
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 class Trainer:
@@ -24,7 +24,7 @@ class Trainer:
     SAVE_OBJECT = 'SAVE_OBJECT'
     SAVE_DICT = 'SAVE_DICT'
 
-    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type='SAVE_DICT'):
+    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type='SAVE_DICT', id=None, optimizer_kwargs={}, loader_kwargs={}):
         self.root = root
         self.model = model
         self.train_dataset = train_dataset
@@ -37,16 +37,14 @@ class Trainer:
         self.grad_clip_type = grad_clip_type
         self.grad_clip_value = grad_clip_value
         self.save_type = save_type
+        self.optimizer_kwargs = optimizer_kwargs
 
         # Instantiate housekeeping variables
-        self.id = str(uuid.uuid4().hex)
-        self.log = {'train_loss': []}
-        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size, shuffle=False, pin_memory=False)  # TODO: Set shuffle as hyperparam num_workers=4
+        self.id = str(uuid.uuid4().hex) if id is None else id
+        self.log = {'train_loss': [], 'duration': []}
+        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size, **loader_kwargs)
 
-        if self.dtype == torch.float:
-            self.optimizer = self.optimizer_func(self.model.parameters(), self.lr)
-        elif self.dtype == torch.half:
-            self.optimizer = self.optimizer_func(self.model.parameters(), self.lr, eps=1e-4)
+        self.optimizer = self.optimizer_func(self.model.parameters(), self.lr, **optimizer_kwargs)
 
         # Register grad clippings
         if self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_PRE:
@@ -117,39 +115,15 @@ class Trainer:
     def train_for_single_epoch(self):
         epoch_loss = 0
 
-        end_time = 0
-        start_time = 0
         for batch_id, (data, target) in enumerate(self.train_data_loader):
-            start_time = time.time()
-            #end_time = time.time()
-            #torch.cuda.synchronize()
-            #print('load step', end_time - start_time)
-
-            #start_time = time.time()
-
             data = data.to(self.device).type(self.dtype)
             target = target.to(self.device).type(self.dtype)
-            #end_time = time.time()
-            #torch.cuda.synchronize()
-            #print('data', end_time - start_time)
-            #start_time = time.time()
 
             self.optimizer.zero_grad()
             output = self.model(data)
-            #end_time = time.time()
-            #torch.cuda.synchronize()
-            #print('model forward', end_time - start_time)
-            #start_time = time.time()
             loss = self.loss(output, target, self.model)
-            #end_time = time.time()
-            #torch.cuda.synchronize()
-            #print('loss', end_time - start_time)
-            #start_time = time.time()
             epoch_loss += loss.item()
             loss.backward()
-            #end_time = time.time()
-            #torch.cuda.synchronize()
-            #print('back', end_time - start_time)
 
             if self.grad_clip_type is not None:
 
@@ -159,16 +133,9 @@ class Trainer:
                 elif self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_POST:
                     torch.nn.utils.clip_grad_value_(self.model.parameters(), self.grad_clip_value)
 
-            #start_time = time.time()
             self.optimizer.step()
-            #end_time = time.time()
-            #print('opt step', end_time - start_time)
-            #start_time = time.time()
-            #torch.cuda.synchronize()
-            end_time = time.time()
-            print('total', end_time - start_time)
 
-        return epoch_loss / (batch_id + 1)
+        return epoch_loss
 
     def train(self, save=False):
         if save:
@@ -178,9 +145,13 @@ class Trainer:
 
         for epoch in range(self.n_epochs):
             # Train the model
+            start_time = time.time()
             epoch_loss = self.train_for_single_epoch()
-            logger.info(f'Completed epoch {epoch} with loss {epoch_loss}')
+            end_time = time.time()
+            epoch_duration = end_time - start_time
+            logger.info(f'Completed epoch {epoch} with loss {epoch_loss} in {epoch_duration:.4f}s')
             self.log['train_loss'].append(epoch_loss)
+            self.log['duration'].append(epoch_duration)
 
             self.on_epoch_complete(save)
 

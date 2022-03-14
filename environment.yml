@@ -1,15 +1,14 @@
 name: brainbox
 dependencies:
   - python=3.8
-  - nb_conda_kernels=2.3.1
+  - black
+  - pytest
   - numpy
-  - seaborn
   - pandas
-  - scipy
-  - scikit-learn
   - pytorch::pytorch
   - pytorch::torchvision
-  - nvidia::cudatoolkit=11.1
+  - h5py
+  - nb_conda_kernels=2.3.1
   - pip:
     - kornia
-    - h5py<3.0.0
+    - --editable .
