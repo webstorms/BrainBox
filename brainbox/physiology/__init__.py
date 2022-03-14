@@ -1,3 +1,3 @@
-from ._spiking import *
-from ._gabor import *
-from ._rfs import *
+import brainbox.physiology.spiking.rate
+import brainbox.physiology.spiking.isi
+import brainbox.physiology.spiking.synchrony

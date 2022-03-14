@@ -7,7 +7,7 @@ import pandas as pd
 from brainbox.trainer import load_model
 
 logger = logging.getLogger('validator')
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 def build_metric_df(root, model_ids, model_loader, dataset, metric, batch_size=128, device='cuda', dtype=torch.float):
