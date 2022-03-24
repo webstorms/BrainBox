@@ -5,19 +5,10 @@ from brainbox.physiology import util
 
 def generate_spike_tensor(b=2, n=10, t=100, f=0.1):
     foo = torch.rand(b, n, t)
-    foo[foo < f] = 1
     foo[foo >= f] = 0
+    foo[foo != 0] = 1
 
     return foo
-
-
-def test_batchify_time_dimension():
-    spike_trains = generate_spike_tensor(t=4000)
-    batchified_spike_trains = util.batchify_time_dimension(spike_trains, 8, 2000, 200)
-
-    new_time_dim = 2000 // 8
-    assert new_time_dim == batchified_spike_trains.shape[2]
-    assert len(batchified_spike_trains.shape) == 3
 
 
 def test_mean():
