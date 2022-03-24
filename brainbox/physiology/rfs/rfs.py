@@ -1,5 +1,24 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
+
+
+def normalize_rfs(rfs):
+    n_dim, h_dim, w_dim = rfs.shape
+    max_values = rfs.abs().amax(dim=(1,2))
+    max_values = torch.clamp(max_values, min=1e-5, max=np.inf)
+    max_values = max_values.repeat(h_dim, w_dim, 1).permute(2, 0, 1)
+
+    return rfs / max_values
+
+
+def normalize_strfs(strf):
+    n_dim, t_dim, h_dim, w_dim = strf.shape
+    max_values = strf.abs().amax(dim=(1, 2, 3))
+    max_values = torch.clamp(max_values, min=1e-5, max=np.inf)
+    max_values = max_values.repeat(h_dim, w_dim, t_dim, 1).permute(3, 2, 0, 1)
+
+    return strf / max_values
 
 
 def get_highest_power_spatial_rf(spatiotemporal_rf):
@@ -12,7 +31,7 @@ def get_highest_power_spatial_rf(spatiotemporal_rf):
     :return: A tensor of shape  rf_w x rf_h
     """
 
-    power_at_timesteps = torch.pow(spatiotemporal_rf, 2)._mean(dim=(1, 2))
+    power_at_timesteps = torch.pow(spatiotemporal_rf, 2).mean(dim=(1, 2))
     t = power_at_timesteps.argmax().item()
     spatial_rf = spatiotemporal_rf[t]
 
@@ -49,9 +68,8 @@ def get_temporal_power_profile(spatiotemporal_rfs):
     :return: A tensor of shape rf_len
     """
 
-    power_profile = torch.pow(spatiotemporal_rfs, 2)._mean(dim=(2, 3))._mean(dim=0).detach().cpu().float()
+    power_profile = torch.pow(spatiotemporal_rfs, 2).mean(dim=(2, 3)).mean(dim=0).detach().cpu().float()
     power_profile = power_profile / power_profile.sum()
-
     return power_profile
 
 

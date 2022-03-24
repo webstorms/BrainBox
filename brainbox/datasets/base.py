@@ -29,6 +29,9 @@ class BBDataset(torch.utils.data.Dataset):
 
         return hyperparams
 
+    def dims(self):
+        return self._dataset.shape
+
     def _load_dataset(self, train):
         raise NotImplementedError
 

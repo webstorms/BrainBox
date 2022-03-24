@@ -17,7 +17,7 @@ class GaborFitter:
     GABOR_THETAS = [0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]
     GABOR_PHIS = [0, np.pi / 2, np.pi, 3 * np.pi / 2]
     GABOR_FREQUENCIES = [0.05, 0.1]
-    
+
     def __init__(self, root, name, rfs, spatial_locations=None, sigmas=None, thetas=None, phis=None, frequencies=None, n_spectral_itr=800, n_spatial_itr=1200, spectral_lr=0.01, spatial_lr=0.002):
         self.root = root
         self.name = name
