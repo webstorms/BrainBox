@@ -1,0 +1,17 @@
+name: Linting and Tests
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: continuumio/miniconda3
+    steps:
+    - name: Checkout brainbox
+      uses: actions/checkout@v2
+    - name: Run tests and formatting
+      shell: bash -l {0}
+      run: |
+        ./scripts/validate.sh
