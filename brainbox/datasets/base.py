@@ -9,13 +9,22 @@ class BBDataset(torch.utils.data.Dataset):
         self._transform = transform
         self._target_transform = target_transform
 
-        self._dataset = self._load_dataset(train)
+        self._dataset, self._targets = self._load_dataset(train)
 
         if preprocess is not None:
             self._dataset = preprocess(self._dataset)
 
         if push_gpu:
             self._dataset = self._dataset.cuda()
+            self._targets = self._dataset.cuda()
+
+    def __getitem__(self, i):
+        x, y = self._dataset[i], self._targets[i]
+
+        return x, y
+
+    def __len__(self):
+        return len(self._dataset)
 
     @property
     def hyperparams(self):

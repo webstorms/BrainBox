@@ -36,7 +36,7 @@ class Natural(PredictionTemporalDataset):
         dataset = dataset.unsqueeze(1)
         dataset = dataset.type(torch.FloatTensor)
 
-        return dataset
+        return dataset, None
 
 
 class MouseNat(PredictionTemporalDataset):
@@ -73,7 +73,7 @@ class MouseNat(PredictionTemporalDataset):
         dataset = dataset.unsqueeze(1)
         dataset = dataset.type(torch.FloatTensor)
 
-        return dataset
+        return dataset, None
 
 
 class HumanNat(PredictionTemporalDataset):
@@ -110,4 +110,4 @@ class HumanNat(PredictionTemporalDataset):
         dataset = dataset.unsqueeze(1)
         dataset = dataset.type(torch.FloatTensor)
 
-        return dataset
+        return dataset, None

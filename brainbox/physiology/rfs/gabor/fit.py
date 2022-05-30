@@ -19,7 +19,7 @@ class GaborFitter:
 
     GABOR_SIGMAS = [0.5, 1.5]
     GABOR_THETAS = [0, np.pi / 4, np.pi / 2, 3 * np.pi / 4, np.pi]
-    GABOR_PHIS = [0, np.pi / 2, np.pi, 3 * np.pi / 2]
+    GABOR_PHIS = [0, np.pi / 2, np.pi]
     GABOR_FREQUENCIES = [0.05, 0.1]
 
     def __init__(self):
@@ -27,7 +27,11 @@ class GaborFitter:
 
     def fit_spatial(self, path, rfs, batch_size, n_spectral_iterations=1000, n_spatial_iterations=2000, spectral_lr=1e-2, spatial_lr=1e-3, device="cuda", **kwargs):
         batch_params = []
-        for b in range(rfs.shape[0] // batch_size):
+
+        iterations = rfs.shape[0] // batch_size
+        iterations += 1 if rfs.shape[0] > iterations * batch_size else 0
+
+        for b in range(iterations):
             logger.info(f"Fitting gabors for batch {b}...")
             params = self.fit_spatial_single_batch(rfs[b*batch_size:(b+1)*batch_size], n_spectral_iterations, n_spatial_iterations, spectral_lr, spatial_lr, device, **kwargs)
             batch_params.append(torch.stack(params))
@@ -195,7 +199,7 @@ class Gabor(nn.Module):
 
     @property
     def phi(self):
-        return torch.clamp(self._phi, min=0, max=2*np.pi)
+        return torch.clamp(self._phi, min=0, max=np.pi)
 
     @property
     def frequency(self):

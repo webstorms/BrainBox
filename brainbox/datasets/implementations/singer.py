@@ -42,4 +42,4 @@ class BBCWild(PredictionTemporalDataset):
         dataset = dataset.unsqueeze(1)
         dataset = dataset.type(torch.FloatTensor)
 
-        return dataset
+        return dataset, None

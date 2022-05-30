@@ -98,7 +98,7 @@ class GaborQuery:
     def _build_gabors(self):
         x0, y0, sigmax, sigmay, theta, phi, frequency = GaborQuery._df_params_to_gabor_params(self._params_df)
 
-        return Gabor(x0_init=x0, y0_init=y0, sigmax_init=sigmax, sigmay_init=sigmay, theta_init=theta, phi_init=phi, frequency_init=frequency)()
+        return Gabor(rf_size=self._rf_size, x0_init=x0, y0_init=y0, sigmax_init=sigmax, sigmay_init=sigmay, theta_init=theta, phi_init=phi, frequency_init=frequency)()
 
     @staticmethod
     def _get_2D_spatiotemporal_rfs(params, spatiotemporal_rfs):
