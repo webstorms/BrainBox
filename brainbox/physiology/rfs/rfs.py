@@ -5,13 +5,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-logger = logging.getLogger('util')
+logger = logging.getLogger("util")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 def normalize_rfs(rfs):
     n_dim, h_dim, w_dim = rfs.shape
-    max_values = rfs.abs().amax(dim=(1,2))
+    max_values = rfs.abs().amax(dim=(1, 2))
     max_values = torch.clamp(max_values, min=1e-5, max=np.inf)
     max_values = max_values.repeat(h_dim, w_dim, 1).permute(2, 0, 1)
 
@@ -57,7 +57,9 @@ def get_all_highest_power_spatial_rf(spatiotemporal_rfs):
     rfs = []
 
     for i in range(len(spatiotemporal_rfs)):
-        spatial_rf = get_highest_power_spatial_rf(spatiotemporal_rfs[i].detach().cpu().float())
+        spatial_rf = get_highest_power_spatial_rf(
+            spatiotemporal_rfs[i].detach().cpu().float()
+        )
         rfs.append(spatial_rf)
     rfs = torch.stack(rfs)
 
@@ -65,19 +67,33 @@ def get_all_highest_power_spatial_rf(spatiotemporal_rfs):
 
 
 def get_temporal_power_profile(spatiotemporal_rfs):
-    power_profile = torch.pow(spatiotemporal_rfs, 2).mean(dim=(0, 2, 3)).detach().cpu().float()
+    power_profile = (
+        torch.pow(spatiotemporal_rfs, 2).mean(dim=(0, 2, 3)).detach().cpu().float()
+    )
     power_profile = power_profile / power_profile.sum()
 
     return power_profile
 
 
-def sta(input_to_spikes, rf_len, rf_h, rf_w, t_len, noise_var=10, samples=10, batch_size=2000, device='cuda'):
+def sta(
+    input_to_spikes,
+    rf_len,
+    rf_h,
+    rf_w,
+    t_len,
+    noise_var=10,
+    samples=10,
+    batch_size=2000,
+    device="cuda",
+):
 
     model_rfs = 0
 
     for i in range(samples // batch_size):
         logger.info(f"Processing batch {i} out of {samples // batch_size}...")
-        noise = torch.normal(0, noise_var, (min(batch_size, samples - i * batch_size), t_len, rf_h, rf_w)).to(device)
+        noise = torch.normal(
+            0, noise_var, (min(batch_size, samples - i * batch_size), t_len, rf_h, rf_w)
+        ).to(device)
         model_output = input_to_spikes(noise)
 
         off = noise.shape[1] - model_output.shape[2]
@@ -85,9 +101,9 @@ def sta(input_to_spikes, rf_len, rf_h, rf_w, t_len, noise_var=10, samples=10, ba
         count = 0
 
         for t in range(rf_len - 1, t_len):
-            _noise = noise[:, t - rf_len + 1:t + 1]
+            _noise = noise[:, t - rf_len + 1 : t + 1]
             _model_output = model_output[:, :, t]
-            batch_model_rfs = torch.einsum('bthw, bn->bnthw', _noise, _model_output)
+            batch_model_rfs = torch.einsum("bthw, bn->bnthw", _noise, _model_output)
             count += batch_model_rfs.shape[0]
             model_rfs += batch_model_rfs.sum(dim=0)
 

@@ -4,11 +4,21 @@ import logging
 import torch
 import torch.nn.functional as F
 
-logger = logging.getLogger('util')
+logger = logging.getLogger("util")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
-def run_function_on_batch(function, dataset, batch_size, data_device='cuda', dtype=torch.float, max_batches=None, verbose=True, store_on_cpu=False, **kwargs):
+def run_function_on_batch(
+    function,
+    dataset,
+    batch_size,
+    data_device="cuda",
+    dtype=torch.float,
+    max_batches=None,
+    verbose=True,
+    store_on_cpu=False,
+    **kwargs,
+):
     data_loader = torch.utils.data.DataLoader(dataset, batch_size, **kwargs)
 
     output_list = []
@@ -53,20 +63,28 @@ def get_std(tensor, ignore_c=0, mean=None):
     sqrd_error_with_zero = torch.pow(tensor - mean_repeated, 2).sum(dim=2)
     sqrd_error_from_mask = zero_mask.sum(dim=2) * torch.pow(mean, 2)
 
-    return torch.sqrt((sqrd_error_with_zero - sqrd_error_from_mask) / nonzero_mask.sum(dim=2))
+    return torch.sqrt(
+        (sqrd_error_with_zero - sqrd_error_from_mask) / nonzero_mask.sum(dim=2)
+    )
 
 
 def cross_covariance_matrix(x, y, normalize=True):
-    x_min_mean = (x - x.mean(0))
-    y_min_mean = (y - y.mean(0))
+    x_min_mean = x - x.mean(0)
+    y_min_mean = y - y.mean(0)
 
     b_dim = x.shape[0]
-    cross_covariance_matrix_batch = torch.einsum("bni, bnj -> nij", x_min_mean, y_min_mean)
-    _cross_covariance_matrix = cross_covariance_matrix_batch / b_dim  # Average across samples / batch dim
+    cross_covariance_matrix_batch = torch.einsum(
+        "bni, bnj -> nij", x_min_mean, y_min_mean
+    )
+    _cross_covariance_matrix = (
+        cross_covariance_matrix_batch / b_dim
+    )  # Average across samples / batch dim
 
     if normalize:
         inv_x_std = torch.nan_to_num(1 / x.std(0, unbiased=False))
         inv_y_std = torch.nan_to_num(1 / y.std(0, unbiased=False))
-        return torch.einsum("nij, ni, nj -> nij", _cross_covariance_matrix, inv_x_std, inv_y_std)
+        return torch.einsum(
+            "nij, ni, nj -> nij", _cross_covariance_matrix, inv_x_std, inv_y_std
+        )
 
     return _cross_covariance_matrix
