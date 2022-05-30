@@ -1,6 +1,12 @@
+import sys
+import logging
+
 import numpy as np
 import torch
 import torch.nn.functional as F
+
+logger = logging.getLogger('util')
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 def normalize_rfs(rfs):
@@ -59,28 +65,20 @@ def get_all_highest_power_spatial_rf(spatiotemporal_rfs):
 
 
 def get_temporal_power_profile(spatiotemporal_rfs):
-
-    """
-    Get the temporal power profile from a population of spatiotemporal RFs which is calculated as the mean, over space
-    and the population, of the squared values of the spatial RFs at each point in time.
-
-    :param spatiotemporal_rfs: A tensor of shape n_units x rf_len x rf_w x rf_h
-    :return: A tensor of shape rf_len
-    """
-
-    power_profile = torch.pow(spatiotemporal_rfs, 2).mean(dim=(2, 3)).mean(dim=0).detach().cpu().float()
+    power_profile = torch.pow(spatiotemporal_rfs, 2).mean(dim=(0, 2, 3)).detach().cpu().float()
     power_profile = power_profile / power_profile.sum()
+
     return power_profile
 
 
-def estimate_rfs(model, rf_len, rf_h, rf_w, t_len, noise_var=10, samples=10, batch_size=2000, device='cuda'):
+def sta(input_to_spikes, rf_len, rf_h, rf_w, t_len, noise_var=10, samples=10, batch_size=2000, device='cuda'):
 
     model_rfs = 0
 
     for i in range(samples // batch_size):
-        print('Processing batch_id {0} out of {1}...'.format(i, samples // batch_size))
+        logger.info(f"Processing batch {i} out of {samples // batch_size}...")
         noise = torch.normal(0, noise_var, (min(batch_size, samples - i * batch_size), t_len, rf_h, rf_w)).to(device)
-        model_output = model(noise)
+        model_output = input_to_spikes(noise)
 
         off = noise.shape[1] - model_output.shape[2]
         model_output = F.pad(model_output, (off, 0))
@@ -97,4 +95,3 @@ def estimate_rfs(model, rf_len, rf_h, rf_w, t_len, noise_var=10, samples=10, bat
     model_rfs = model_rfs.detach().cpu()
 
     return model_rfs
-

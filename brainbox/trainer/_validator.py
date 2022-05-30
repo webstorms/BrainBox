@@ -17,8 +17,8 @@ def build_metric_df(root, model_ids, model_loader, dataset, metric, batch_size=1
     for model_id in model_ids:
         logger.info(f'Computing metric for {model_id}...')
         try:
-            model = model_loader(root, model_id, device, dtype)
-            # model = load_model(root, model_id, model_loader, device, dtype)
+            #model = model_loader(root, model_id, device, dtype)
+            model = load_model(root, model_id, model_loader, device, dtype)
             metric_scores = compute_metric(model, dataset, metric, batch_size, device, dtype)
 
             for batch_id, metric_score in enumerate(metric_scores):
