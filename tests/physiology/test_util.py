@@ -25,7 +25,9 @@ def test_std():
     patchy_tensor = _generate_patchy_tensor(b=2, n=4)
 
     def compute_std(time_series, ignore_c):
-        return torch.Tensor([e for e in time_series if e != ignore_c]).std(unbiased=False)
+        return torch.Tensor([e for e in time_series if e != ignore_c]).std(
+            unbiased=False
+        )
 
     std_tensor = util.get_std(patchy_tensor, ignore_c=0)
     _assert_measure(patchy_tensor, compute_std, std_tensor, ignore_c=0)

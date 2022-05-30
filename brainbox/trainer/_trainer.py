@@ -11,20 +11,37 @@ import torch
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger('trainer')
+logger = logging.getLogger("trainer")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 class Trainer:
 
-    GRAD_VALUE_CLIP_PRE = 'GRAD_VALUE_CLIP_PRE'
-    GRAD_VALUE_CLIP_POST = 'GRAD_VALUE_CLIP_POST'
-    GRAD_NORM_CLIP = 'GRAD_NORM_CLIP'
+    GRAD_VALUE_CLIP_PRE = "GRAD_VALUE_CLIP_PRE"
+    GRAD_VALUE_CLIP_POST = "GRAD_VALUE_CLIP_POST"
+    GRAD_NORM_CLIP = "GRAD_NORM_CLIP"
 
-    SAVE_OBJECT = 'SAVE_OBJECT'
-    SAVE_DICT = 'SAVE_DICT'
+    SAVE_OBJECT = "SAVE_OBJECT"
+    SAVE_DICT = "SAVE_DICT"
 
-    def __init__(self, root, model, train_dataset, n_epochs, batch_size, lr, optimizer_func=torch.optim.Adam, device='cuda', dtype=torch.float, grad_clip_type=None, grad_clip_value=None, save_type='SAVE_DICT', id=None, optimizer_kwargs={}, loader_kwargs={}):
+    def __init__(
+        self,
+        root,
+        model,
+        train_dataset,
+        n_epochs,
+        batch_size,
+        lr,
+        optimizer_func=torch.optim.Adam,
+        device="cuda",
+        dtype=torch.float,
+        grad_clip_type=None,
+        grad_clip_value=None,
+        save_type="SAVE_DICT",
+        id=None,
+        optimizer_kwargs={},
+        loader_kwargs={},
+    ):
         self.root = root
         self.model = model
         self.train_dataset = train_dataset
@@ -41,16 +58,22 @@ class Trainer:
 
         # Instantiate housekeeping variables
         self.id = str(uuid.uuid4().hex) if id is None else id
-        self.log = {'train_loss': [], 'duration': []}
-        self.train_data_loader = torch.utils.data.DataLoader(self.train_dataset, self.batch_size, **loader_kwargs)
+        self.log = {"train_loss": [], "duration": []}
+        self.train_data_loader = torch.utils.data.DataLoader(
+            self.train_dataset, self.batch_size, **loader_kwargs
+        )
 
-        self.optimizer = self.optimizer_func(self.model.parameters(), self.lr, **optimizer_kwargs)
+        self.optimizer = self.optimizer_func(
+            self.model.parameters(), self.lr, **optimizer_kwargs
+        )
 
         # Register grad clippings
         if self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_PRE:
 
             for p in self.model.parameters():
-                p.register_hook(lambda grad: torch.clamp(grad, -grad_clip_value, grad_clip_value))
+                p.register_hook(
+                    lambda grad: torch.clamp(grad, -grad_clip_value, grad_clip_value)
+                )
 
         # Initialise the model
         self.model = self.model.to(device)
@@ -59,29 +82,37 @@ class Trainer:
         elif dtype == torch.half:
             self.model = self.model.half()
         self.model.train()
-        self.date = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+        self.date = datetime.today().strftime("%Y-%m-%d-%H:%M:%S")
 
     @property
     def hyperparams(self):
         hyperparams = {
-            'trainer': {'date': self.date, 'n_epochs': self.n_epochs, 'batch_size': self.batch_size, 'lr': self.lr, 'dtype': str(self.dtype), 'grad_clip_type': self.grad_clip_type, 'grad_clip_value': self.grad_clip_value},
-            'dataset': self.train_dataset.hyperparams,
-            'model': self.model.hyperparams
+            "trainer": {
+                "date": self.date,
+                "n_epochs": self.n_epochs,
+                "batch_size": self.batch_size,
+                "lr": self.lr,
+                "dtype": str(self.dtype),
+                "grad_clip_type": self.grad_clip_type,
+                "grad_clip_value": self.grad_clip_value,
+            },
+            "dataset": self.train_dataset.hyperparams,
+            "model": self.model.hyperparams,
         }
 
         return hyperparams
 
     @property
     def model_path(self):
-        return os.path.join(self.root, self.id, 'model.pt')
+        return os.path.join(self.root, self.id, "model.pt")
 
     @property
     def hyperparams_path(self):
-        return os.path.join(self.root, self.id, 'hyperparams.json')
+        return os.path.join(self.root, self.id, "hyperparams.json")
 
     @property
     def log_path(self):
-        return os.path.join(self.root, self.id, 'log.csv')
+        return os.path.join(self.root, self.id, "log.csv")
 
     def save_model(self):
         if self.save_type == Trainer.SAVE_OBJECT:
@@ -90,7 +121,7 @@ class Trainer:
             torch.save(self.model.state_dict(), self.model_path)
 
     def save_hyperparams(self):
-        with open(self.hyperparams_path, 'w', encoding='utf-8') as f:
+        with open(self.hyperparams_path, "w", encoding="utf-8") as f:
             json.dump(self.hyperparams, f, ensure_ascii=False, indent=4)
 
     def save_model_log(self):
@@ -128,10 +159,14 @@ class Trainer:
             if self.grad_clip_type is not None:
 
                 if self.grad_clip_type == Trainer.GRAD_NORM_CLIP:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip_value)
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), self.grad_clip_value
+                    )
 
                 elif self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_POST:
-                    torch.nn.utils.clip_grad_value_(self.model.parameters(), self.grad_clip_value)
+                    torch.nn.utils.clip_grad_value_(
+                        self.model.parameters(), self.grad_clip_value
+                    )
 
             self.optimizer.step()
 
@@ -149,9 +184,11 @@ class Trainer:
             epoch_loss = self.train_for_single_epoch()
             end_time = time.time()
             epoch_duration = end_time - start_time
-            logger.info(f'Completed epoch {epoch} with loss {epoch_loss} in {epoch_duration:.4f}s')
-            self.log['train_loss'].append(epoch_loss)
-            self.log['duration'].append(epoch_duration)
+            logger.info(
+                f"Completed epoch {epoch} with loss {epoch_loss} in {epoch_duration:.4f}s"
+            )
+            self.log["train_loss"].append(epoch_loss)
+            self.log["duration"].append(epoch_duration)
 
             self.on_epoch_complete(save)
 
