@@ -61,6 +61,9 @@ class Natural(PredictionTemporalDataset):
 
         return dataset, None
 
+    def _get_fps(self):
+        return 120
+
 
 class MouseNat(PredictionTemporalDataset):
 
@@ -121,6 +124,9 @@ class MouseNat(PredictionTemporalDataset):
 
         return dataset, None
 
+    def _get_fps(self):
+        return 120
+
 
 class HumanNat(PredictionTemporalDataset):
 
@@ -180,3 +186,6 @@ class HumanNat(PredictionTemporalDataset):
         dataset = dataset.type(torch.FloatTensor)
 
         return dataset, None
+
+    def _get_fps(self):
+        return 120

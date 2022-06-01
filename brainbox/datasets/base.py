@@ -107,9 +107,16 @@ class TemporalDataset(BBDataset):
             "clip_length": self._clip_length,
         }
 
+    @property
+    def fps(self):
+        return self._get_fps()
+
     def load_clips(self, i):
         # x: channel x timesteps x ...
         # y: channel x timesteps x ...
+        raise NotImplementedError
+
+    def _get_fps(self):
         raise NotImplementedError
 
 
