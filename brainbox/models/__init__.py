@@ -1,3 +1,3 @@
-from ._model import BBModel
+from .model import BBModel
 
 __all__ = ["BBModel"]

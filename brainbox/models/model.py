@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from brainbox.models import _weight_init
+from brainbox.models import weight_init
 
 
 class BBModel(nn.Module):

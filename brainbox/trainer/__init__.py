@@ -1,12 +1,12 @@
-from ._trainer import Trainer, get_trainer
-from ._query import (
+from .trainer import Trainer, get_trainer
+from .query import (
     get_model_ids,
     load_model,
     load_log,
     load_hyperparams,
     build_models_df,
 )
-from ._validator import build_metric_df, compute_metric
+from .validator import build_metric_df, compute_metric
 
 __all__ = [
     "Trainer",
