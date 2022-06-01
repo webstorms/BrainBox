@@ -28,8 +28,8 @@ def compute_firing_rates_for_dataset(
 def compute_firing_rates(spike_trains, dt, window_dt, stride_dt=None, pad_input=False):
     # spike_trains: b x n x t
     spike_counts = bin_spikes(spike_trains, dt, window_dt, stride_dt, pad_input)
-    kernel_length = window_dt // dt
-    actual_window_dt = kernel_length * dt
+    kernel_length = int(window_dt // dt)
+    actual_window_dt = int(kernel_length * dt)
     firing_rates = spike_counts * (1000 / actual_window_dt)
     del spike_counts
 
@@ -39,9 +39,9 @@ def compute_firing_rates(spike_trains, dt, window_dt, stride_dt=None, pad_input=
 def bin_spikes(spike_trains, dt, window_dt, stride_dt=None, pad_input=False):
     # spike_trains: b x n x t
     spike_trains = spike_trains.unsqueeze(1)
-    kernel_length = window_dt // dt
+    kernel_length = int(window_dt // dt)
     kernel = torch.ones(1, 1, 1, kernel_length).to(spike_trains.device)
-    stride = (1, 1) if stride_dt is None else (1, stride_dt // dt)
+    stride = (1, 1) if stride_dt is None else (1, int(stride_dt // dt))
 
     if pad_input:
         spike_trains = F.pad(spike_trains, (kernel_length - 1, 0))
