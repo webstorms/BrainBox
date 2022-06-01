@@ -62,3 +62,6 @@ class BBCWild(PredictionTemporalDataset):
         dataset = dataset.type(torch.FloatTensor)
 
         return dataset, None
+
+    def _get_fps(self):
+        return 25
