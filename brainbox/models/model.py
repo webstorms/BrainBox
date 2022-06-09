@@ -26,7 +26,7 @@ class BBModel(nn.Module):
                 return name
 
         return None
-    
+
     def init_weight(self, weight, init_type, **kwargs):
         weight_name = self._get_variable_name(weight)
 
