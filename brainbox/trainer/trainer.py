@@ -33,6 +33,7 @@ class Trainer:
         batch_size,
         lr,
         optimizer_func=torch.optim.Adam,
+        scheduler_func=None,
         device="cuda",
         dtype=torch.float,
         grad_clip_type=None,
@@ -40,6 +41,7 @@ class Trainer:
         save_type="SAVE_DICT",
         id=None,
         optimizer_kwargs={},
+        scheduler_kwargs={},
         loader_kwargs={},
     ):
         self.root = root
@@ -49,12 +51,14 @@ class Trainer:
         self.batch_size = batch_size
         self.lr = lr
         self.optimizer_func = optimizer_func
+        self.scheduler_func = scheduler_func
         self.device = device
         self.dtype = dtype
         self.grad_clip_type = grad_clip_type
         self.grad_clip_value = grad_clip_value
         self.save_type = save_type
         self.optimizer_kwargs = optimizer_kwargs
+        self.scheduler_kwargs = scheduler_kwargs
 
         # Instantiate housekeeping variables
         self.id = str(uuid.uuid4().hex) if id is None else id
@@ -66,6 +70,10 @@ class Trainer:
         self.optimizer = self.optimizer_func(
             self.model.parameters(), self.lr, **optimizer_kwargs
         )
+        if self.scheduler_func is not None:
+            print("scheduler_func", scheduler_func)
+            print("self.scheduler_kwargs", self.scheduler_kwargs)
+            self.scheduler = scheduler_func(self.optimizer, **self.scheduler_kwargs)
 
         # Register grad clippings
         if self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_PRE:
@@ -169,6 +177,9 @@ class Trainer:
                     )
 
             self.optimizer.step()
+
+        if self.scheduler is not None:
+            self.scheduler.step()
 
         return epoch_loss
 
