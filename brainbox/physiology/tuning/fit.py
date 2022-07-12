@@ -285,7 +285,7 @@ class GratingsProber:
 
     def get_response_to_preferred_grating(self, n_timesteps, unit_id=None, batch_size=10):
         gratings = self.generate_preferred_grating(n_timesteps, unit_id)
-        
+
         if unit_id is not None:
             return self.model(gratings.unsqueeze(0))[0, int(unit_id)]
         else:
