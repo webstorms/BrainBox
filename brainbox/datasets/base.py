@@ -23,10 +23,13 @@ class BBDataset(torch.utils.data.Dataset):
 
         if push_gpu:
             self._dataset = self._dataset.cuda()
-            self._targets = self._dataset.cuda()
+            self._targets = self._targets.cuda()
 
     def __getitem__(self, i):
         x, y = self._dataset[i], self._targets[i]
+
+        if self._transform is not None:
+            x = self._transform(x)
 
         return x, y
 
@@ -157,7 +160,7 @@ class PredictionTemporalDataset(TemporalDataset):
         clip = self.load_clip(i)
 
         x = clip[:, : -self._pred_horizon]
-        y = clip[:, self._pred_horizon:]
+        y = clip[:, self._pred_horizon :]
 
         return x, y
 
@@ -166,9 +169,38 @@ class PredictionTemporalDataset(TemporalDataset):
 
 
 class PatchPredictionTemporalDataset(PredictionTemporalDataset):
-
-    def __init__(self, root, sample_length, dt, in_k, out_k, stride, n_clips, clip_length, clip_h, clip_w, pred_horizon, train=True, preprocess=None, transform=None, target_transform=None, push_gpu=False):
-        super().__init__(root, sample_length, dt, n_clips, clip_length, pred_horizon, train, preprocess, transform, target_transform, push_gpu)
+    def __init__(
+        self,
+        root,
+        sample_length,
+        dt,
+        in_k,
+        out_k,
+        stride,
+        n_clips,
+        clip_length,
+        clip_h,
+        clip_w,
+        pred_horizon,
+        train=True,
+        preprocess=None,
+        transform=None,
+        target_transform=None,
+        push_gpu=False,
+    ):
+        super().__init__(
+            root,
+            sample_length,
+            dt,
+            n_clips,
+            clip_length,
+            pred_horizon,
+            train,
+            preprocess,
+            transform,
+            target_transform,
+            push_gpu,
+        )
 
         self._in_k = in_k
         self._out_k = out_k
@@ -187,14 +219,31 @@ class PatchPredictionTemporalDataset(PredictionTemporalDataset):
 
     @property
     def hyperparams(self):
-        return {**super().hyperparams, "in_k": self._in_k, "out_k": self._out_k, "stride": self._stride, "clip_h": self._clip_h, "clip_w": self._clip_w}
+        return {
+            **super().hyperparams,
+            "in_k": self._in_k,
+            "out_k": self._out_k,
+            "stride": self._stride,
+            "clip_h": self._clip_h,
+            "clip_w": self._clip_w,
+        }
 
     def __getitem__(self, i):
         clip_id, t_id, h_id, w_id = self._ids[i]
         x, y = self.load_clips(clip_id)
         p = int((self._in_k - self._out_k) / 2)
-        x = x[:, t_id : t_id + self._sample_length, h_id:h_id+self._in_k, w_id:w_id+self._in_k]
-        y = y[:, t_id : t_id + self._sample_length, h_id+p:h_id+self._in_k-p, w_id+p:w_id+self._in_k-p]
+        x = x[
+            :,
+            t_id : t_id + self._sample_length,
+            h_id : h_id + self._in_k,
+            w_id : w_id + self._in_k,
+        ]
+        y = y[
+            :,
+            t_id : t_id + self._sample_length,
+            h_id + p : h_id + self._in_k - p,
+            w_id + p : w_id + self._in_k - p,
+        ]
 
         if self._transform is not None:
             x = self._transform(x)
@@ -203,8 +252,3 @@ class PatchPredictionTemporalDataset(PredictionTemporalDataset):
             y = self._target_transform(y)
 
         return x, y
-
-
-
-
-

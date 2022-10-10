@@ -74,6 +74,8 @@ class Trainer:
             print("scheduler_func", scheduler_func)
             print("self.scheduler_kwargs", self.scheduler_kwargs)
             self.scheduler = scheduler_func(self.optimizer, **self.scheduler_kwargs)
+        else:
+            self.scheduler = None
 
         # Register grad clippings
         if self.grad_clip_type == Trainer.GRAD_VALUE_CLIP_PRE:
