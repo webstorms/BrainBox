@@ -4,7 +4,10 @@ import h5py
 import torch
 import numpy as np
 
-from brainbox.datasets.base import PredictionTemporalDataset, PatchPredictionTemporalDataset
+from brainbox.datasets.base import (
+    PredictionTemporalDataset,
+    PatchPredictionTemporalDataset,
+)
 
 
 class Natural(PredictionTemporalDataset):
@@ -72,19 +75,19 @@ class PatchNatural(PatchPredictionTemporalDataset):
     _CLIP_LENGTH = 1200
 
     def __init__(
-            self,
-            root,
-            sample_length,
-            dt,
-            in_k,
-            out_k,
-            stride,
-            pred_horizon,
-            train=True,
-            preprocess=None,
-            transform=None,
-            target_transform=None,
-            push_gpu=False,
+        self,
+        root,
+        sample_length,
+        dt,
+        in_k,
+        out_k,
+        stride,
+        pred_horizon,
+        train=True,
+        preprocess=None,
+        transform=None,
+        target_transform=None,
+        push_gpu=False,
     ):
         n_clips = Natural._N_TRAIN_CLIPS if train else Natural._N_TEST_CLIPS
         super().__init__(

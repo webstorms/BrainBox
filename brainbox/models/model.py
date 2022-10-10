@@ -22,6 +22,9 @@ class BBModel(nn.Module):
 
         for name, param in self.named_parameters():
 
+            if src_param.dtype != param.dtype:
+                continue
+
             if torch.equal(param, src_param):
                 return name
 

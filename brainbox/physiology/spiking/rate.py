@@ -37,8 +37,15 @@ def compute_firing_rates(spike_trains, dt, window_dt, stride_dt=None, pad_input=
     return firing_rates
 
 
-def bin_spikes(spike_trains, dt, window_dt, stride_dt=None, pad_input=False, gaussian=False, sigma=1):
-
+def bin_spikes(
+    spike_trains,
+    dt,
+    window_dt,
+    stride_dt=None,
+    pad_input=False,
+    gaussian=False,
+    sigma=1,
+):
     def get_guassian_kernel(sigma, width):
         kernel = [
             (1 / ((np.sqrt(2 * np.pi) * sigma)) * np.exp(-(x ** 2) / (2 * sigma ** 2)))
