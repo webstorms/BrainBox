@@ -48,7 +48,7 @@ def bin_spikes(
 ):
     def get_guassian_kernel(sigma, width):
         kernel = [
-            (1 / ((np.sqrt(2 * np.pi) * sigma)) * np.exp(-(x ** 2) / (2 * sigma ** 2)))
+            (1 / ((np.sqrt(2 * np.pi) * sigma)) * np.exp(-(x**2) / (2 * sigma**2)))
             for x in np.arange(-width // 2 + 1, width // 2 + 1, 1)
         ]
         return torch.Tensor(kernel)

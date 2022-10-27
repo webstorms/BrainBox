@@ -9,11 +9,11 @@ def cc(output, target):
     exp_xy = (output * target).mean(dim=0)
     exp_x = output.mean(dim=0)
     exp_y = target.mean(dim=0)
-    exp_x2 = (output ** 2).mean(dim=0)
-    exp_y2 = (target ** 2).mean(dim=0)
+    exp_x2 = (output**2).mean(dim=0)
+    exp_y2 = (target**2).mean(dim=0)
 
     _cc = (exp_xy - exp_x * exp_y) / (
-        (torch.sqrt(exp_x2 - exp_x ** 2)) * (torch.sqrt(exp_y2 - exp_y ** 2))
+        (torch.sqrt(exp_x2 - exp_x**2)) * (torch.sqrt(exp_y2 - exp_y**2))
     )
 
     return _cc
