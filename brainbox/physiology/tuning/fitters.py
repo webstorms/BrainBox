@@ -49,7 +49,7 @@ class SinusoidFitter:
 
         model_output = self._model_output.unsqueeze(0).repeat(n_params, 1, 1)
 
-        optimizer = torch.optim.SGD([amplitude, phase, frequency, offset], 10 ** -3)
+        optimizer = torch.optim.SGD([amplitude, phase, frequency, offset], 10**-3)
 
         for _ in range(self._n_iterations):
             optimizer.zero_grad()

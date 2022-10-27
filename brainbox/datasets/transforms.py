@@ -76,7 +76,7 @@ class ClipResize(BBTransform):
         self._padding = padding
 
         self._filters = torch.ones(kernel, kernel).view(1, 1, 1, kernel, kernel) / (
-            kernel ** 2
+            kernel**2
         )
 
     def __call__(self, clip):
@@ -213,7 +213,7 @@ class GaussianKernel(BBTransform):
 
     def _build_kernel(self, sigma, width):
         kernel = [
-            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-(x ** 2) / (2 * sigma ** 2)))
+            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-(x**2) / (2 * sigma**2)))
             for x in np.arange(-width // 2 + 1, width // 2 + 1, 1)
         ]
         return torch.Tensor(kernel).view(1, 1, width, 1)
