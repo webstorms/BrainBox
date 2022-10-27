@@ -37,7 +37,7 @@ class TuningQuery:
 
     @staticmethod
     def build_sinusoid(a, f, phase, offset, n_samples):
-        return a*torch.sin(f*2*np.pi*torch.arange(n_samples)+phase)+offset
+        return a * torch.sin(f * 2 * np.pi * torch.arange(n_samples) + phase) + offset
 
     def validate(self, response_threshold=0.01, fit_threshold=0.5, additional_data={}):
         def get_unit_statistics(i):
@@ -53,7 +53,7 @@ class TuningQuery:
                 "tf": self.preferred_temporal_frequency(i),
                 "OSI": self.orientation_selectivity_index(i),
                 "DSI": self.direction_selectivity_index(i),
-                "F1F0": self._spectral_df.iloc[i]["modulation_ratio"]
+                "F1F0": self._spectral_df.iloc[i]["modulation_ratio"],
             }
 
         unit_mean_responses = self._responses.mean(dim=1)
@@ -64,7 +64,9 @@ class TuningQuery:
             unit_statistics_df[key] = column
 
         mean_responses = unit_mean_responses.mean().item()
-        query = (unit_statistics_df["mean_response"] > mean_responses * response_threshold) & (unit_statistics_df["fit_cc"] > fit_threshold)
+        query = (
+            unit_statistics_df["mean_response"] > mean_responses * response_threshold
+        ) & (unit_statistics_df["fit_cc"] > fit_threshold)
 
         return unit_statistics_df[query]
 
@@ -116,9 +118,16 @@ class TuningQuery:
         ).argmin()
         orthogonal_orientation = thetas[nearest_orthogonal_orientation_idx]
 
-        orthogonal_orientation_response = self._probes_df[(self._probes_df["theta"] == orthogonal_orientation) &
-            (self._probes_df["temporal_frequency"] == self.preferred_temporal_frequency(unit_id)) &
-            (self._probes_df["spatial_frequency"] == self.preferred_spatial_frequency(unit_id))
+        orthogonal_orientation_response = self._probes_df[
+            (self._probes_df["theta"] == orthogonal_orientation)
+            & (
+                self._probes_df["temporal_frequency"]
+                == self.preferred_temporal_frequency(unit_id)
+            )
+            & (
+                self._probes_df["spatial_frequency"]
+                == self.preferred_spatial_frequency(unit_id)
+            )
         ][str(unit_id)].values[0]
 
         return (
@@ -135,13 +144,20 @@ class TuningQuery:
         nearest_opposite_orientation = thetas[nearest_opposite_orientation_idx]
 
         opposite_direction_response = self._probes_df[
-            (self._probes_df["theta"] == nearest_opposite_orientation) &
-            (self._probes_df["temporal_frequency"] == self.preferred_temporal_frequency(unit_id)) &
-            (self._probes_df["spatial_frequency"] == self.preferred_spatial_frequency(unit_id))
-            ][str(unit_id)].values[0]
+            (self._probes_df["theta"] == nearest_opposite_orientation)
+            & (
+                self._probes_df["temporal_frequency"]
+                == self.preferred_temporal_frequency(unit_id)
+            )
+            & (
+                self._probes_df["spatial_frequency"]
+                == self.preferred_spatial_frequency(unit_id)
+            )
+        ][str(unit_id)].values[0]
 
-        return ((self.preferred_model_output(unit_id) - opposite_direction_response) /
-                (self.preferred_model_output(unit_id) + opposite_direction_response))
+        return (self.preferred_model_output(unit_id) - opposite_direction_response) / (
+            self.preferred_model_output(unit_id) + opposite_direction_response
+        )
 
     # @property
     # def circular_variance(self):
