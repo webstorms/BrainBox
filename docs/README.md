@@ -8,6 +8,7 @@
   </a>
     <a href="https://badge.fury.io/js/electron-markdownify">
     <img src="https://github.com/webstorms/BrainBox/actions/workflows/tests.yml/badge.svg">
+<img src="https://github.com/webstorms/BrainBox/actions/workflows/linting.yml/badge.svg">
   </a>
 </p>
 
