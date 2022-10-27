@@ -213,7 +213,7 @@ class GaussianKernel(BBTransform):
 
     def _build_kernel(self, sigma, width):
         kernel = [
-            (1 / ((np.sqrt(2 * np.pi) * sigma)) * np.exp(-(x ** 2) / (2 * sigma ** 2)))
+            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-(x ** 2) / (2 * sigma ** 2)))
             for x in np.arange(-width // 2 + 1, width // 2 + 1, 1)
         ]
         return torch.Tensor(kernel).view(1, 1, width, 1)

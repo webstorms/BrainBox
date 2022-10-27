@@ -19,7 +19,7 @@ def build_metric_df(
     batch_size=128,
     device="cuda",
     dtype=torch.float,
-    **kwargs
+    **kwargs,
 ):
 
     metric_list = []
