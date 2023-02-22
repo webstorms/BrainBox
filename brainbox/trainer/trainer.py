@@ -71,8 +71,6 @@ class Trainer:
             self.model.parameters(), self.lr, **optimizer_kwargs
         )
         if self.scheduler_func is not None:
-            print("scheduler_func", scheduler_func)
-            print("self.scheduler_kwargs", self.scheduler_kwargs)
             self.scheduler = scheduler_func(self.optimizer, **self.scheduler_kwargs)
         else:
             self.scheduler = None
@@ -157,8 +155,15 @@ class Trainer:
         epoch_loss = 0
 
         for batch_id, (data, target) in enumerate(self.train_data_loader):
-            data = data.to(self.device).type(self.dtype)
-            target = target.to(self.device).type(self.dtype)
+            if type(data) == list:
+                data = [element.to(self.device).type(self.dtype) for element in data]
+            else:
+                data = data.to(self.device).type(self.dtype)
+
+            if type(target) == list:
+                target = [element.to(self.device).type(self.dtype) for element in target]
+            else:
+                target = target.to(self.device).type(self.dtype)
 
             self.optimizer.zero_grad()
             output = self.model(data)

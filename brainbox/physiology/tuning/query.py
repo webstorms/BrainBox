@@ -19,8 +19,11 @@ class TuningQuery:
         self._spectral_df = (
             pd.read_csv(spectral_path) if spectral_path is not None else None
         )
-        self._gratings = torch.load(os.path.join(path, "gratings.pt"))
-        self._responses = torch.load(os.path.join(path, "unit_responses.pt"))
+        try:
+            self._gratings = torch.load(os.path.join(path, "gratings.pt"))
+            self._responses = torch.load(os.path.join(path, "unit_responses.pt"))
+        except:
+            pass
 
     @property
     def n_units(self):

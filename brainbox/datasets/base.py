@@ -1,6 +1,33 @@
 import torch
 
 
+class BasicBBDataset(torch.utils.data.Dataset):
+
+    def __init__(self, train, transform):
+        self._train = train
+        self._transform = transform
+
+    def __getitem__(self, i):
+        x, y = self.get_item(i)
+
+        if self._transform is not None:
+            x = self._transform(x)
+
+        return x, y
+
+    @property
+    def hyperparams(self):
+        hyperparams = {"name": self.__class__.__name__, "train": self._train}
+
+        if self._transform is not None:
+            hyperparams["transform"] = self._transform.hyperparams
+
+        return hyperparams
+
+    def get_item(self, i):
+        raise NotImplementedError
+
+
 class BBDataset(torch.utils.data.Dataset):
     def __init__(
         self,
