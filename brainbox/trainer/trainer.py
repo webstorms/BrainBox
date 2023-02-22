@@ -161,7 +161,9 @@ class Trainer:
                 data = data.to(self.device).type(self.dtype)
 
             if type(target) == list:
-                target = [element.to(self.device).type(self.dtype) for element in target]
+                target = [
+                    element.to(self.device).type(self.dtype) for element in target
+                ]
             else:
                 target = target.to(self.device).type(self.dtype)
 
