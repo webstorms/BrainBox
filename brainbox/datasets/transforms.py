@@ -217,3 +217,33 @@ class GaussianKernel(BBTransform):
             for x in np.arange(-width // 2 + 1, width // 2 + 1, 1)
         ]
         return torch.Tensor(kernel).view(1, 1, width, 1)
+
+
+class HanningKernel(BBTransform):
+    def __init__(self, length):
+        super().__init__()
+        self._length = length
+        self._kernel = nn.Parameter(
+            torch.from_numpy(np.hanning(length)).view(1, 1, 1, length).float(),
+            requires_grad=False,
+        )
+
+    def __call__(self, x):
+        # x: b x n x t
+        x = x.unsqueeze(1)  # add channel dimension
+        x = F.pad(
+            x, (self._length // 2, self._length // 2)
+        )  # Bad input to ensure valid conv
+        x = F.conv2d(x, self._kernel)
+        x = x.squeeze(1)
+
+        return x
+
+    @property
+    def hyperparams(self):
+        hyperparams = {
+            **super().hyperparams,
+            "length": self._length,
+        }
+
+        return hyperparams

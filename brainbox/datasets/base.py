@@ -2,7 +2,6 @@ import torch
 
 
 class BasicBBDataset(torch.utils.data.Dataset):
-
     def __init__(self, train, transform):
         self._train = train
         self._transform = transform
