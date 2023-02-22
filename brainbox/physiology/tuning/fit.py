@@ -77,7 +77,6 @@ class GratingsProber:
         )
         torch.save(gratings.cpu(), os.path.join(path, "gratings.pt"))
         torch.save(unit_responses.cpu(), os.path.join(path, "unit_responses.pt"))
-
         self.compute_and_save_spectral_analysis(spectral_path, unit_responses)
 
     def probe(self, path, batch_size=1024, device="cuda"):
@@ -200,7 +199,7 @@ class GratingsProber:
 
             for i in range(
                 self._tuning_query.n_units // batch_size
-                + self._tuning_query.n_units % batch_size
+                + 1 if self._tuning_query.n_units % batch_size > 0 else 0
             ):
                 batch_gratings = gratings[i * batch_size : (i + 1) * batch_size]
                 batch_response_to_preferred_grating.append(self.model(batch_gratings))

@@ -73,7 +73,7 @@ class PatchNatural(PatchPredictionTemporalDataset):
     _N_TRAIN_CLIPS = 31
     _N_TEST_CLIPS = 8
     _CLIP_LENGTH = 1200
-
+    
     def __init__(
         self,
         root,
