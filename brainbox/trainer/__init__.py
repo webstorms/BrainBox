@@ -6,6 +6,7 @@ from .query import (
     load_hyperparams,
     build_models_df,
 )
+from .crossval import SplitValidationTrainer, KFoldValidationTrainer
 from .validator import build_metric_df, compute_metric
 
 __all__ = [
@@ -16,6 +17,8 @@ __all__ = [
     "load_log",
     "load_hyperparams",
     "build_models_df",
+    "SplitValidationTrainer",
+    "KFoldValidationTrainer",
     "build_metric_df",
     "compute_metric",
 ]
