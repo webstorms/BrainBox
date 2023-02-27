@@ -55,8 +55,18 @@ def compute_metric(
 
     with torch.no_grad():
         for data, target in data_loader:
-            data = data.to(device).type(dtype)
-            target = target.to(device).type(dtype)
+            if type(data) == list:
+                data = [element.to(device).type(dtype) for element in data]
+            else:
+                data = data.to(device).type(dtype)
+
+            if type(target) == list:
+                target = [
+                    element.to(device).type(dtype) for element in target
+                ]
+            else:
+                target = target.to(device).type(dtype)
+
             if len(kwargs) > 0:
                 output = model(data, **kwargs)
             else:
