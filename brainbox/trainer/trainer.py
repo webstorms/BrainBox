@@ -194,7 +194,7 @@ class Trainer:
 
     def train(self, save=False):
         if save:
-            os.mkdir(os.path.join(self.root, self.id))
+            os.makedirs(os.path.join(self.root, self.id))
 
         self.on_training_start(save)
 

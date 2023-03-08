@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
@@ -230,6 +231,8 @@ class HanningKernel(BBTransform):
 
     def __call__(self, x):
         # x: b x n x t
+        self._kernel = self._kernel.to(x.device)
+
         x = x.unsqueeze(1)  # add channel dimension
         x = F.pad(
             x, (self._length // 2, self._length // 2)
