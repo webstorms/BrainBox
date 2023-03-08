@@ -5,6 +5,7 @@ import logging
 
 import torch
 import pandas as pd
+from sklearn.model_selection import KFold
 
 from .validator import compute_metric
 
@@ -140,7 +141,7 @@ class KFoldValidationTrainer(BaseValidationTrainer):
             train_scores_list.append(train_score)
             val_scores_list.append(val_score)
 
-        train_score = torch.stack(train_scores_list).mean().item()
-        val_score = torch.stack(val_scores_list).mean().item()
+        train_score = torch.Tensor(train_scores_list).mean().item()
+        val_score = torch.Tensor(val_scores_list).mean().item()
 
         return train_score, val_score
