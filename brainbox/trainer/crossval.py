@@ -39,7 +39,7 @@ class FoldDataset(torch.utils.data.Dataset):
 
 class BaseValidationTrainer:
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score=True, final_repeat=1):
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score=True, final_repeat=1, val_loss=None):
         self._root = root
         self._model = model
         self._train_dataset = train_dataset
@@ -48,6 +48,7 @@ class BaseValidationTrainer:
         self._lambdas = lambdas
         self._minimise_score = minimise_score
         self._final_repeat = final_repeat
+        self._val_loss = val_loss
 
     @property
     def train_path(self):
@@ -100,9 +101,13 @@ class BaseValidationTrainer:
             return train_score, val_score
 
     def _compute_score(self, model, dataset):
-        trainer = self._trainer_class(self.train_path, model, dataset, lam=0, **self._trainer_kwargs)
-        loss = lambda output, target: trainer.loss(output, target, model)
-        score = compute_metric(model, dataset, loss, trainer.batch_size, trainer.device, trainer.dtype)
+        if self._val_loss is None:
+            trainer = self._trainer_class(self.train_path, model, dataset, lam=0, **self._trainer_kwargs)
+            val_loss = lambda output, target: trainer.loss(output, target, model)
+        else:
+            val_loss = self._val_loss
+
+        score = compute_metric(model, dataset, val_loss, trainer.batch_size, trainer.device, trainer.dtype)
 
         return torch.Tensor(score).sum().item()
 
