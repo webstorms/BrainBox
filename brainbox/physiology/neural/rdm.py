@@ -10,13 +10,21 @@ def compute_rdm(X):
     return 1 - np.corrcoef(X)
 
 
+def rdm_distance(X, Y, method="spearman"):
+    rdm_X = compute_rdm(X)
+    rdm_Y = compute_rdm(Y)
+    mean_deviation = compute_rdm_distance_from_rdms(rdm_X, rdm_Y, method)
+
+    return mean_deviation
+
+
 def bootstrap_rdm_distance(X, Y, method="spearman", nboot=100):
     rdm_X = compute_rdm(X)
     rdm_Y = compute_rdm(Y)
-    mean_deviation = compute_rdm_distance(rdm_X, rdm_Y, method)
+    mean_deviation = compute_rdm_distance_from_rdms(rdm_X, rdm_Y, method)
     std_deviation = np.std(
         [
-            compute_rdm_distance(
+            compute_rdm_distance_from_rdms(
                 rdm_X,
                 compute_rdm(
                     Y[:, np.random.randint(low=0, high=Y.shape[1], size=Y.shape[1])]
@@ -30,7 +38,7 @@ def bootstrap_rdm_distance(X, Y, method="spearman", nboot=100):
     return mean_deviation, std_deviation
 
 
-def compute_rdm_distance(rdm_X, rdm_Y, method="spearman"):
+def compute_rdm_distance_from_rdms(rdm_X, rdm_Y, method="spearman"):
     assert rdm_X.shape[0] == rdm_X.shape[1]
     assert rdm_Y.shape[0] == rdm_Y.shape[1]
     assert rdm_X.shape == rdm_Y.shape

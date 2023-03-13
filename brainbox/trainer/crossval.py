@@ -39,7 +39,7 @@ class FoldDataset(torch.utils.data.Dataset):
 
 class BaseValidationTrainer:
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score=True, final_repeat=1, val_loss=None):
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None):
         self._root = root
         self._model = model
         self._train_dataset = train_dataset
@@ -49,6 +49,7 @@ class BaseValidationTrainer:
         self._minimise_score = minimise_score
         self._final_repeat = final_repeat
         self._val_loss = val_loss
+        self._val_batch_size = val_batch_size
 
     @property
     def train_path(self):
@@ -101,21 +102,22 @@ class BaseValidationTrainer:
             return train_score, val_score
 
     def _compute_score(self, model, dataset):
+        trainer = self._trainer_class(self.train_path, model, dataset, lam=0, **self._trainer_kwargs)
         if self._val_loss is None:
-            trainer = self._trainer_class(self.train_path, model, dataset, lam=0, **self._trainer_kwargs)
             val_loss = lambda output, target: trainer.loss(output, target, model)
         else:
             val_loss = self._val_loss
 
-        score = compute_metric(model, dataset, val_loss, trainer.batch_size, trainer.device, trainer.dtype)
+        val_batch_size = trainer.batch_size if self._val_batch_size is None else self._val_batch_size
+        score = compute_metric(model, dataset, val_loss, val_batch_size, trainer.device, trainer.dtype)
 
         return torch.Tensor(score).sum().item()
 
 
 class SplitValidationTrainer(BaseValidationTrainer):
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, train_idxs, val_idxs, minimise_score=True, final_repeat=1):
-        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat)
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, train_idxs, val_idxs, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None):
+        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat, val_loss, val_batch_size)
         self._train_idxs = train_idxs
         self._val_idxs = val_idxs
 
@@ -129,8 +131,8 @@ class SplitValidationTrainer(BaseValidationTrainer):
 
 class KFoldValidationTrainer(BaseValidationTrainer):
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, k, minimise_score=True, final_repeat=1):
-        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat)
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, k, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None):
+        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat, val_loss, val_batch_size)
         self._k = k
 
     def _fit_over_folds(self, lam):
