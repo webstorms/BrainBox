@@ -5,15 +5,16 @@ import numpy as np
 # Adapted from Patrick Mineault (https://github.com/patrickmineault/your-head-is-there-to-move-you-around)
 
 
-def compute_rdm(X):
-    assert len(X.shape) == 2
-    return 1 - np.corrcoef(X)
+def compute_rdm(x):
+    # x: stimuli x neurons
+    assert len(x.shape) == 2
+    return torch.Tensor(1 - np.corrcoef(x))
 
 
-def rdm_distance(X, Y, method="spearman"):
-    rdm_X = compute_rdm(X)
-    rdm_Y = compute_rdm(Y)
-    mean_deviation = compute_rdm_distance_from_rdms(rdm_X, rdm_Y, method)
+def rdm_distance(x, y, method="spearman"):
+    rdm_x = compute_rdm(x)
+    rdm_y = compute_rdm(y)
+    mean_deviation = compute_rdm_distance_from_rdms(rdm_x, rdm_y, method)
 
     return mean_deviation
 
