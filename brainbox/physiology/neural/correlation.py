@@ -1,6 +1,12 @@
 import torch
 
 
+def r2(output, target):
+    assert len(output.shape) == 1
+    assert len(target.shape) == 1
+    return 1 - torch.pow(target - output, 2).sum() / torch.pow((target - target.mean()), 2).sum()
+
+
 def cc(output, target):
     assert output.shape == target.shape
     # output: nxt
@@ -41,3 +47,21 @@ def compute_max_spe(target, unbiased=True):
     rp = target.mean(1).var(unbiased=unbiased)
 
     return sp / rp
+
+
+def nc(y):
+    # y: neurons x repeat x time
+    trial_avg = y.mean(1)
+    neuron_avg = trial_avg.mean(1)
+    total_diff = (y - neuron_avg.view(-1, 1, 1))
+    noise_diff = (y - trial_avg.unsqueeze(1))
+    N, K, T = y.shape
+    M_total = (1 / (T * K)) * torch.einsum("ikt, jkt -> ij", total_diff, total_diff)
+    M_noise = (1 / (T * K)) * torch.einsum("ikt, jkt -> ij", noise_diff, noise_diff)
+
+    M_total_diag = torch.Tensor([M_total[i, i] for i in range(N)])
+    norm_M_noise = M_noise * torch.sqrt(torch.einsum("i, j -> ij", M_total_diag, M_total_diag))
+    for i in range(N):
+        norm_M_noise[i, i] = 0
+
+    return norm_M_noise
