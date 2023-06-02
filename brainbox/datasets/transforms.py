@@ -148,12 +148,31 @@ class ClipRandomHorizontalFlip(BBTransform):
             return clip
 
 
+class ClipExtend(BBTransform):
+
+    def __init__(self, frames):
+        self._frames = frames
+        self._kernel = torch.ones(1, 1, frames, 1, 1)
+
+    def __call__(self, clip):
+        if self._kernel.device != clip.device:
+            self._kernel = self._kernel.to(clip.device)
+        return F.conv_transpose3d(clip, self._kernel, stride=(self._frames, 1, 1))
+
+    @property
+    def hyperparams(self):
+        hyperparams = {**super().hyperparams, "frames": self._frames}
+
+        return hyperparams
+
+
 class ImgToClip(BBTransform):
-    def __init__(self, pre_blanks, repeats, post_blanks):
+    def __init__(self, pre_blanks, repeats, post_blanks, c=0):
         self._pre_blanks = pre_blanks
         self._repeats = repeats
         self._post_blanks = post_blanks
-
+        self._c = c
+    
     def __call__(self, img):
         # img: channel x height x width
         # output: channel x time x height x width
@@ -162,7 +181,7 @@ class ImgToClip(BBTransform):
         height = img.shape[1]
         width = img.shape[2]
 
-        clip = torch.zeros(
+        clip = self._c * torch.ones(
             (
                 channel,
                 self._pre_blanks + self._repeats + self._post_blanks,
@@ -193,14 +212,19 @@ class GaussianKernel(BBTransform):
         self._width = width
 
         self._kernel = self._build_kernel(sigma, width)
-
+    
     def __call__(self, x):
-        # x: channel x time x n_neurons
-        x = x.unsqueeze(0)  # add batch dimension
-        x = F.pad(x, (0, 0, self._width // 2, self._width // 2))
-        x = F.conv2d(x, self._kernel)
+        if len(x.shape) == 3:  # x: channel x time x n_neurons
+            x = x.unsqueeze(0)  # add batch dimension
+            x = F.pad(x, (0, 0, self._width // 2, self._width // 2))
+            x = F.conv2d(x, self._kernel)
 
-        return x[0]
+            return x[0]
+        else:  # x: b x channel x time x n_neurons
+            x = F.pad(x, (0, 0, self._width // 2, self._width // 2))
+            x = F.conv2d(x, self._kernel)
+
+            return x
 
     @property
     def hyperparams(self):
@@ -214,7 +238,7 @@ class GaussianKernel(BBTransform):
 
     def _build_kernel(self, sigma, width):
         kernel = [
-            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-(x**2) / (2 * sigma**2)))
+            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-((x)**2) / (2 * sigma**2)))
             for x in np.arange(-width // 2 + 1, width // 2 + 1, 1)
         ]
         return torch.Tensor(kernel).view(1, 1, width, 1)

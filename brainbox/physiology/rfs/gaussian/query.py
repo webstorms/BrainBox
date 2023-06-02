@@ -7,13 +7,13 @@ import pandas as pd
 from kornia import geometry
 
 from brainbox.physiology.rfs import rfs
-from brainbox.physiology.rfs.gabor.fit import GaborFitter, Gabor
+from brainbox.physiology.rfs.gaussian.fit import GaborFitter, Gaussian2D
 
 logger = logging.getLogger("gabor")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
-class GaborQuery:
+class GaussianQuery:
 
     SPACE_TIME_SEPARABLE = "separable"
     SPACE_TIME_INSEPARABLE = "inseparable"
@@ -25,6 +25,7 @@ class GaborQuery:
         self._rf_size = strfs.shape[-1]
         self._spatial_rfs = rfs.get_all_highest_power_spatial_rf(strfs)
         self._gabors = self._build_gabors()
+        print(len(self._get_correlation()))
         self._params_df["cc"] = self._get_correlation()
 
     def validate(
@@ -50,9 +51,8 @@ class GaborQuery:
         spatial_rfs = self._spatial_rfs[query]
         gabors = self._gabors[query]
         strfs = self._strfs[query]
-        rfs2d = GaborQuery._get_2D_spatiotemporal_rfs(params_df, strfs)
 
-        return params_df, spatial_rfs, gabors, strfs, rfs2d
+        return params_df, spatial_rfs, gabors, strfs
 
     def get_temporal_profile(
         self,
@@ -114,7 +114,7 @@ class GaborQuery:
         inseperable_units = (s[:, 1] / s[:, 0] > inseperable_thresh).numpy()
         query = (
             inseperable_units
-            if separability == GaborQuery.SPACE_TIME_INSEPARABLE
+            if separability == GaussianQuery.SPACE_TIME_INSEPARABLE
             else inseperable_units == False
         )
 
@@ -132,77 +132,31 @@ class GaborQuery:
 
     def _build_gabors(self):
         (
+            amp,
             x0,
             y0,
             sigmax,
             sigmay,
-            theta,
-            phi,
-            frequency,
-        ) = GaborQuery._df_params_to_gabor_params(self._params_df)
+            p
+        ) = GaussianQuery._df_params_to_gabor_params(self._params_df)
 
-        return Gabor(
+        return Gaussian2D(
             rf_size=self._rf_size,
+            amp_init=amp,
             x0_init=x0,
             y0_init=y0,
             sigmax_init=sigmax,
             sigmay_init=sigmay,
-            theta_init=theta,
-            phi_init=phi,
-            frequency_init=frequency,
+            p_init=p,
         )()
 
     @staticmethod
-    def _get_2D_spatiotemporal_rfs(params, spatiotemporal_rfs):
-        def translate(rf, dx, dy):
-            return geometry.translate(rf.unsqueeze(0), torch.Tensor([[dx, dy]]))[0]
-
-        def rotate(rf, rot_deg):
-            return geometry.rotate(rf.unsqueeze(0), torch.Tensor([rot_deg]))[0]
-
-        def get_2d_spatiotemporal_rf(spatiotemporal_rf, x0, y0, theta):
-            # spatiotemporal_rf: rf_len x w x h
-            n_timesteps = spatiotemporal_rf.shape[0]
-            rf_size = spatiotemporal_rf.shape[1] // 2
-            dx = rf_size - x0
-            dy = rf_size - y0
-            rot_deg = np.rad2deg(theta)
-            transformed_spatiotemporal_rf = []
-
-            for t in range(n_timesteps):
-                transformed_rf = translate(spatiotemporal_rf[t], dx, dy)
-                transformed_rf = rotate(transformed_rf, rot_deg)
-                transformed_spatiotemporal_rf.append(transformed_rf)
-
-            transformed_spatiotemporal_rf = torch.stack(transformed_spatiotemporal_rf)
-
-            return transformed_spatiotemporal_rf.sum(dim=1).T
-
-        assert len(params) == len(
-            spatiotemporal_rfs
-        ), "Provided params and spatiotemporal_rfs are of different lengths."
-        spatiotemporal_2d_rfs = []
-
-        for i in range(len(params)):
-            x0 = params.iloc[i].x0
-            y0 = params.iloc[i].y0
-            theta = params.iloc[i].theta
-
-            spatiotemporal_2d_rf = get_2d_spatiotemporal_rf(
-                spatiotemporal_rfs[i], x0, y0, theta
-            )
-            spatiotemporal_2d_rfs.append(spatiotemporal_2d_rf)
-
-        return torch.stack(spatiotemporal_2d_rfs)
-
-    @staticmethod
     def _df_params_to_gabor_params(params_df):
+        amp = torch.Tensor(params_df["amp"].to_numpy())
         x0 = torch.Tensor(params_df["x0"].to_numpy())
         y0 = torch.Tensor(params_df["y0"].to_numpy())
         sigmax = torch.Tensor(params_df["sigmax"].to_numpy())
         sigmay = torch.Tensor(params_df["sigmay"].to_numpy())
-        theta = torch.Tensor(params_df["theta"].to_numpy())
-        phi = torch.Tensor(params_df["phi"].to_numpy())
-        frequency = torch.Tensor(params_df["frequency"].to_numpy())
+        p = torch.Tensor(params_df["p"].to_numpy())
 
-        return x0, y0, sigmax, sigmay, theta, phi, frequency
+        return amp, x0, y0, sigmax, sigmay, p

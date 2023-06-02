@@ -91,6 +91,7 @@ class Trainer:
             self.model = self.model.half()
         self.model.train()
         self.date = datetime.today().strftime("%Y-%m-%d-%H:%M:%S")
+        self.exit = False
 
     @property
     def hyperparams(self):
@@ -199,6 +200,8 @@ class Trainer:
         self.on_training_start(save)
 
         for epoch in range(self.n_epochs):
+            if self.exit:
+                break
             # Train the model
             start_time = time.time()
             epoch_loss = self.train_for_single_epoch()
