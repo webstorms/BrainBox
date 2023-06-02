@@ -45,7 +45,6 @@ def get_highest_power_spatial_rf(spatiotemporal_rf):
 
 
 def get_all_highest_power_spatial_rf(spatiotemporal_rfs):
-
     """
     Obtain the spatial RFs with largest mean power from the provided set of spatiotemporal RFs. The mean power is
     calculated as the mean over both spatial dimensions of the squared values of the spatial RFs at every time step.

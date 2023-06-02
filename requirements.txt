@@ -4,3 +4,4 @@ torch
 torchvision
 kornia
 scipy
+scikit-learn
