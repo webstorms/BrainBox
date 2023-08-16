@@ -11,15 +11,15 @@ import torch.nn.functional as F
 
 import brainbox.physiology.rfs.rfs as rfs_util
 
-logger = logging.getLogger("gabor")
+logger = logging.getLogger("gaussian")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
-class GaborFitter:
+class GaussianFitter:
 
-    GABOR_AMPS = [-1, 1]
-    GABOR_SIGMAS = [0.5, 1, 1.5]
-    GABOR_PS = [-0.5, 0, 0.5]
+    GAUSSIAN_AMPS = [-1, 1]
+    GAUSSIAN_SIGMAS = [0.5, 1, 1.5]
+    GAUSSIAN_PS = [-0.5, 0, 0.5]
 
     def __init__(self):
         pass
@@ -42,7 +42,7 @@ class GaborFitter:
         iterations += 1 if rfs.shape[0] > iterations * batch_size else 0
 
         for b in range(iterations):
-            logger.info(f"Fitting gabors for batch {b}...")
+            logger.info(f"Fitting gaussians for batch {b}...")
             params = self.fit_spatial_single_batch(
                 rfs[b * batch_size : (b + 1) * batch_size],
                 n_spectral_iterations,
@@ -79,10 +79,10 @@ class GaborFitter:
     ):
         n_rfs = rfs.shape[0]
         rf_size = rfs.shape[-1]
-        initial_gabor_params = GaborFitter._build_initial_gabor_params(
+        initial_gaussian_params = GaussianFitter._build_initial_gaussian_params(
             rf_size, n_rfs, **kwargs
         )
-        n_params = len(initial_gabor_params[0]) // n_rfs
+        n_params = len(initial_gaussian_params[0]) // n_rfs
         normalized_rfs = torch.repeat_interleave(
             rfs_util.normalize_rfs(rfs), n_params, 0
         ).to(device)
@@ -102,11 +102,11 @@ class GaborFitter:
             spatial_lr,
             device,
             rf_size,
-            *initial_gabor_params,
+            *initial_gaussian_params,
         )
         spatial_fitter.fit()
 
-        return GaborFitter._get_best_fits(
+        return GaussianFitter._get_best_fits(
             normalized_rfs, spatial_fitter.gaussian_model, n_params, n_rfs
         )
 
@@ -136,12 +136,12 @@ class GaborFitter:
     #     return spatial_fitter.gabor_model.cpu()
 
     @staticmethod
-    def _build_initial_gabor_params(rf_size, repeat, **kwargs):
-        amps_init = kwargs.get("sigmax_init", GaborFitter.GABOR_AMPS)
+    def _build_initial_gaussian_params(rf_size, repeat, **kwargs):
+        amps_init = kwargs.get("sigmax_init", GaussianFitter.GAUSSIAN_AMPS)
         x0_init, y0_init = [rf_size // 2], [rf_size // 2]
-        sigmax_init = kwargs.get("sigmax_init", GaborFitter.GABOR_SIGMAS)
-        sigmay_init = kwargs.get("sigmay_init", GaborFitter.GABOR_SIGMAS)
-        p_init = kwargs.get("p_init", GaborFitter.GABOR_PS)
+        sigmax_init = kwargs.get("sigmax_init", GaussianFitter.GAUSSIAN_SIGMAS)
+        sigmay_init = kwargs.get("sigmay_init", GaussianFitter.GAUSSIAN_SIGMAS)
+        p_init = kwargs.get("p_init", GaussianFitter.GAUSSIAN_PS)
 
         params_product = list(
             itertools.product(
@@ -170,12 +170,12 @@ class GaborFitter:
         )
 
     @staticmethod
-    def _extract_gabor_params(gabor_model):
-        x0_init = gabor_model.x0.data
-        y0_init = gabor_model.y0.data
-        sigmax_init = gabor_model.sigmax.data
-        sigmay_init = gabor_model.sigmay.data
-        p_init = gabor_model.p.data
+    def _extract_gaussian_params(gaussian_model):
+        x0_init = gaussian_model.x0.data
+        y0_init = gaussian_model.y0.data
+        sigmax_init = gaussian_model.sigmax.data
+        sigmay_init = gaussian_model.sigmay.data
+        p_init = gaussian_model.p.data
 
         return (
             x0_init,
@@ -186,8 +186,8 @@ class GaborFitter:
         )
 
     @staticmethod
-    def _get_best_fits(repeated_rfs, gabor_model, n_params, n_rfs):
-        predictions = gabor_model()
+    def _get_best_fits(repeated_rfs, gaussian_model, n_params, n_rfs):
+        predictions = gaussian_model()
         losses = (
             F.mse_loss(repeated_rfs, predictions, reduction="none")
             .mean(dim=(1, 2))
@@ -197,12 +197,12 @@ class GaborFitter:
             [n_params * i for i in range(n_rfs)]
         ).int().to(repeated_rfs.device)
 
-        amp = gabor_model.amplitude.data[best_idxs]
-        x0 = gabor_model.x0.data[best_idxs]
-        y0 = gabor_model.y0.data[best_idxs]
-        sigmax = gabor_model.sigmax.data[best_idxs]
-        sigmay = gabor_model.sigmay.data[best_idxs]
-        p = gabor_model.p.data[best_idxs]
+        amp = gaussian_model.amplitude.data[best_idxs]
+        x0 = gaussian_model.x0.data[best_idxs]
+        y0 = gaussian_model.y0.data[best_idxs]
+        sigmax = gaussian_model.sigmax.data[best_idxs]
+        sigmay = gaussian_model.sigmay.data[best_idxs]
+        p = gaussian_model.p.data[best_idxs]
 
         return amp, x0, y0, sigmax, sigmay, p
 

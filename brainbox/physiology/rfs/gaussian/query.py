@@ -7,9 +7,9 @@ import pandas as pd
 from kornia import geometry
 
 from brainbox.physiology.rfs import rfs
-from brainbox.physiology.rfs.gaussian.fit import GaborFitter, Gaussian2D
+from brainbox.physiology.rfs.gaussian.fit import Gaussian2D
 
-logger = logging.getLogger("gabor")
+logger = logging.getLogger("gaussian")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
@@ -24,7 +24,7 @@ class GaussianQuery:
 
         self._rf_size = strfs.shape[-1]
         self._spatial_rfs = rfs.get_all_highest_power_spatial_rf(strfs)
-        self._gabors = self._build_gabors()
+        self._gaussians = self._build_gaussians()
         print(len(self._get_correlation()))
         self._params_df["cc"] = self._get_correlation()
 
@@ -49,45 +49,10 @@ class GaussianQuery:
 
         params_df = self._params_df[query]
         spatial_rfs = self._spatial_rfs[query]
-        gabors = self._gabors[query]
+        gaussians = self._gaussians[query]
         strfs = self._strfs[query]
 
-        return params_df, spatial_rfs, gabors, strfs
-
-    def get_temporal_profile(
-        self,
-        min_cc=0.8,
-        min_env=0.5,
-        separability=None,
-        inseperable_thresh=0.5,
-        verbose=True,
-        n_spatial_iterations=100,
-        spatial_lr=1e-2,
-        device="cuda",
-    ):
-
-        params_df, spatial_rfs, gabors, strfs, rfs2d = self.validate(
-            min_cc,
-            min_env,
-            separability=separability,
-            inseperable_thresh=inseperable_thresh,
-            verbose=verbose,
-        )
-
-        n_dim, t_dim = strfs.shape[0], strfs.shape[1]
-        gabor_params = GaborQuery._df_params_to_gabor_params(params_df)
-        gabor_params = [
-            torch.repeat_interleave(gabor_param, t_dim) for gabor_param in gabor_params
-        ]
-
-        gabor_fitter = GaborFitter()
-        gabor_model = gabor_fitter.fit_spatiotemporal(
-            strfs.to(device), gabor_params, n_spatial_iterations, spatial_lr, device
-        )
-        temporal_profiles = gabor_model.amplitude.view(n_dim, t_dim)
-        rr = [-(tp.min()).item() for tp in temporal_profiles]
-
-        return temporal_profiles, rr
+        return params_df, spatial_rfs, gaussians, strfs
 
     def _query_cc(self, min_cc):
         return self._params_df["cc"] > min_cc
@@ -121,16 +86,16 @@ class GaussianQuery:
         return query
 
     def _get_correlation(self):
-        def correlation(gabor, rf):
+        def correlation(gaussian, rf):
             return np.corrcoef(
-                gabor.flatten().detach().numpy(), rf.flatten().detach().numpy()
+                gaussian.flatten().detach().numpy(), rf.flatten().detach().numpy()
             )[0, 1]
 
         return [
-            correlation(gabor, rf) for gabor, rf in zip(self._gabors, self._spatial_rfs)
+            correlation(gaussian, rf) for gaussian, rf in zip(self._gaussians, self._spatial_rfs)
         ]
 
-    def _build_gabors(self):
+    def _build_gaussians(self):
         (
             amp,
             x0,
@@ -138,7 +103,7 @@ class GaussianQuery:
             sigmax,
             sigmay,
             p
-        ) = GaussianQuery._df_params_to_gabor_params(self._params_df)
+        ) = GaussianQuery._df_params_to_gaussian_params(self._params_df)
 
         return Gaussian2D(
             rf_size=self._rf_size,
@@ -151,7 +116,7 @@ class GaussianQuery:
         )()
 
     @staticmethod
-    def _df_params_to_gabor_params(params_df):
+    def _df_params_to_gaussian_params(params_df):
         amp = torch.Tensor(params_df["amp"].to_numpy())
         x0 = torch.Tensor(params_df["x0"].to_numpy())
         y0 = torch.Tensor(params_df["y0"].to_numpy())
