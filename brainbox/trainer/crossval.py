@@ -39,7 +39,7 @@ class FoldDataset(torch.utils.data.Dataset):
 
 class BaseValidationTrainer:
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None):
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None, final_epochs=None):
         self._root = root
         self._model = model
         self._train_dataset = train_dataset
@@ -50,6 +50,7 @@ class BaseValidationTrainer:
         self._final_repeat = final_repeat
         self._val_loss = val_loss
         self._val_batch_size = val_batch_size
+        self._final_epochs = final_epochs
 
     @property
     def train_path(self):
@@ -80,7 +81,7 @@ class BaseValidationTrainer:
         # Train on all data and save results and model
         logger.info(f"Fitting for best l1={best_lam}...")
         for i in range(self._final_repeat):
-            self._fit_for_fold(best_lam, self._train_dataset, save=True, id=str(i))
+            self._fit_for_fold(best_lam, self._train_dataset, save=True, id=str(i), n_epochs=self._final_epochs)
 
         cv_results = pd.DataFrame(cv_results)
         cv_results.to_csv(os.path.join(self._root, "cv.csv"), index=False)
@@ -88,9 +89,15 @@ class BaseValidationTrainer:
     def _fit_over_folds(self, lam):
         raise NotImplementedError
 
-    def _fit_for_fold(self, lam, train_dataset, val_dataset=None, save=False, id=None):
+    def _fit_for_fold(self, lam, train_dataset, val_dataset=None, save=False, id=None, n_epochs=None):
         model = copy.deepcopy(self._model)
-        trainer = self._trainer_class(self.train_path, model, train_dataset, lam=lam, **self._trainer_kwargs, id=id)
+
+        _trainer_kwargs = self._trainer_kwargs
+        if n_epochs is not None:
+            print("Changing final n_epochs!")
+            _trainer_kwargs["n_epochs"] = n_epochs
+
+        trainer = self._trainer_class(self.train_path, model, train_dataset, lam=lam, **_trainer_kwargs, id=id)
         trainer.train(save)
 
         if val_dataset is None:
@@ -116,8 +123,8 @@ class BaseValidationTrainer:
 
 class SplitValidationTrainer(BaseValidationTrainer):
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, train_idxs, val_idxs, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None):
-        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat, val_loss, val_batch_size)
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, train_idxs, val_idxs, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None, final_epochs=None):
+        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat, val_loss, val_batch_size, final_epochs)
         self._train_idxs = train_idxs
         self._val_idxs = val_idxs
 
@@ -131,8 +138,8 @@ class SplitValidationTrainer(BaseValidationTrainer):
 
 class KFoldValidationTrainer(BaseValidationTrainer):
 
-    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, k, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None):
-        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat, val_loss, val_batch_size)
+    def __init__(self, root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, k, minimise_score=True, final_repeat=1, val_loss=None, val_batch_size=None, final_epochs=None):
+        super().__init__(root, model, train_dataset, trainer_class, trainer_kwargs, lambdas, minimise_score, final_repeat, val_loss, val_batch_size, final_epochs)
         self._k = k
 
     def _fit_over_folds(self, lam):

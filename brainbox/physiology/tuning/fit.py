@@ -202,7 +202,7 @@ class GratingsProber:
                 if self._tuning_query.n_units % batch_size > 0
                 else 0
             ):
-                batch_gratings = gratings[i * batch_size : (i + 1) * batch_size]
+                batch_gratings = gratings[i * batch_size: (i + 1) * batch_size]
                 batch_response_to_preferred_grating.append(self.model(batch_gratings))
 
             response_to_preferred_grating = torch.cat(

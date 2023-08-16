@@ -166,6 +166,24 @@ class ClipExtend(BBTransform):
         return hyperparams
 
 
+class ClipShrink(BBTransform):
+
+    def __init__(self, frames):
+        self._frames = frames
+        self._kernel = torch.ones(1, 1, frames, 1, 1)
+
+    def __call__(self, clip):
+        if self._kernel.device != clip.device:
+            self._kernel = self._kernel.to(clip.device)
+        return F.conv3d(clip, self._kernel, stride=(self._frames, 1, 1))
+
+    @property
+    def hyperparams(self):
+        hyperparams = {**super().hyperparams, "frames": self._frames}
+
+        return hyperparams
+
+
 class ImgToClip(BBTransform):
     def __init__(self, pre_blanks, repeats, post_blanks, c=0):
         self._pre_blanks = pre_blanks
@@ -174,22 +192,40 @@ class ImgToClip(BBTransform):
         self._c = c
     
     def __call__(self, img):
-        # img: channel x height x width
-        # output: channel x time x height x width
-        assert len(img.shape) == 3
-        channel = img.shape[0]
-        height = img.shape[1]
-        width = img.shape[2]
+        if len(img.shape) == 3:
+            # img: channel x height x width
+            # output: channel x time x height x width
+            channel = img.shape[0]
+            height = img.shape[1]
+            width = img.shape[2]
 
-        clip = self._c * torch.ones(
-            (
-                channel,
-                self._pre_blanks + self._repeats + self._post_blanks,
-                height,
-                width,
+            clip = self._c * torch.ones(
+                (
+                    channel,
+                    self._pre_blanks + self._repeats + self._post_blanks,
+                    height,
+                    width,
+                )
             )
-        )
-        clip[:, self._pre_blanks : self._pre_blanks + self._repeats] = img
+            clip[:, self._pre_blanks : self._pre_blanks + self._repeats] = img
+        elif len(img.shape) == 4:
+            # img: batch x channel x height x width
+            # output: batch x channel x time x height x width
+            batch = img.shape[0]
+            channel = img.shape[1]
+            height = img.shape[2]
+            width = img.shape[3]
+
+            clip = self._c * torch.ones(
+                (
+                    batch,
+                    channel,
+                    self._pre_blanks + self._repeats + self._post_blanks,
+                    height,
+                    width,
+                )
+            )
+            clip[:, :, self._pre_blanks : self._pre_blanks + self._repeats] = img.unsqueeze(2)  # Add fake time dim to img
 
         return clip
 
@@ -212,7 +248,7 @@ class GaussianKernel(BBTransform):
         self._width = width
 
         self._kernel = self._build_kernel(sigma, width)
-    
+
     def __call__(self, x):
         if len(x.shape) == 3:  # x: channel x time x n_neurons
             x = x.unsqueeze(0)  # add batch dimension

@@ -108,6 +108,40 @@ class TuningQuery:
 
         return theta, response
 
+    def orientation_sf_tuning_curve(self, unit_id):
+        preferred_temporal_frequency_query = (
+                 self._probes_df["temporal_frequency"]
+                 == self.preferred_temporal_frequency(unit_id)
+         )
+        response_per_theta = self._probes_df[
+            preferred_temporal_frequency_query
+        ]
+        # return response_per_theta
+        response_per_theta = response_per_theta.sort_values(by=["theta", "spatial_frequency"])
+
+        theta = response_per_theta[["theta"]].to_numpy().flatten()
+        sf = response_per_theta[["spatial_frequency"]].to_numpy().flatten()
+        response = response_per_theta[[str(unit_id)]].to_numpy().flatten()
+
+        return theta, sf, response
+
+    def orientation_tf_tuning_curve(self, unit_id):
+        preferred_temporal_frequency_query = (
+                self._probes_df["spatial_frequency"]
+                == self.preferred_spatial_frequency(unit_id)
+        )
+        response_per_theta = self._probes_df[
+            preferred_temporal_frequency_query
+        ]
+        # return response_per_theta
+        response_per_theta = response_per_theta.sort_values(by=["theta", "temporal_frequency"])
+
+        theta = response_per_theta[["theta"]].to_numpy().flatten()
+        tf = response_per_theta[["temporal_frequency"]].to_numpy().flatten()
+        response = response_per_theta[[str(unit_id)]].to_numpy().flatten()
+
+        return theta, tf, response
+
     def orientation_selectivity_index(self, unit_id):
         thetas = self._probes_df["theta"].unique()
 
