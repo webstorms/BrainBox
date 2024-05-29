@@ -158,13 +158,23 @@ class GratingsProber:
             [
                 torch.arange(rf_h, dtype=torch.float32),
                 torch.arange(rf_w, dtype=torch.float32),
+<<<<<<< HEAD
             ]
+=======
+            ],
+            indexing="ij"
+>>>>>>> local-changes
         )
         theta = torch.Tensor([theta]).expand_as(y)
         spatial_freq = torch.Tensor([spatial_freq]).expand_as(y)
 
+<<<<<<< HEAD
         fps = int(1000 // dt)
         n_timesteps = int(duration // dt)
+=======
+        fps = int(1000 / dt)
+        n_timesteps = int(duration / dt)
+>>>>>>> local-changes
         timesteps = (
             torch.arange(n_timesteps).view(n_timesteps, 1, 1).repeat(1, rf_h, rf_w)
         )

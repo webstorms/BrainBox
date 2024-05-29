@@ -65,6 +65,7 @@ def get_std(tensor, ignore_c=0, mean=None):
 
     return torch.sqrt(
         (sqrd_error_with_zero - sqrd_error_from_mask) / nonzero_mask.sum(dim=2)
+<<<<<<< HEAD
     )
 
 
@@ -88,3 +89,6 @@ def cross_covariance_matrix(x, y, normalize=True):
         )
 
     return _cross_covariance_matrix
+=======
+    )
+>>>>>>> local-changes

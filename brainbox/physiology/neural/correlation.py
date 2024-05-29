@@ -1,7 +1,13 @@
 import torch
 
 
+<<<<<<< HEAD
 def r2(output, target):
+=======
+def R2(output, target):
+    # output: T
+    # target: T
+>>>>>>> local-changes
     assert len(output.shape) == 1
     assert len(target.shape) == 1
     return 1 - torch.pow(target - output, 2).sum() / torch.pow((target - target.mean()), 2).sum()
@@ -49,6 +55,20 @@ def compute_max_spe(target, unbiased=True):
     return sp / rp
 
 
+<<<<<<< HEAD
+=======
+def compute_max_response_reliability(x):
+    # x: clips x time x repeat x neuron
+    n_trials = x.shape[2]
+    mean_response = x.mean(2).unsqueeze(2).repeat(1, 1, n_trials, 1)
+
+    flatten_mean_response = mean_response.flatten(0, 2).permute(1, 0)
+    flatten_trial_response = x.flatten(0, 2).permute(1, 0)
+
+    return cc(flatten_mean_response, flatten_trial_response)
+
+
+>>>>>>> local-changes
 def nc(y):
     # y: neurons x repeat x time
     trial_avg = y.mean(1)
