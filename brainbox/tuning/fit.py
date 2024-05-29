@@ -21,16 +21,16 @@ class GratingsProber:
     GRATINGS_TEMPORAL_FREQS = np.linspace(1, 10, 10)
 
     def __init__(
-        self,
-        model,
-        amplitude,
-        rf_w,
-        rf_h,
-        duration,
-        dt,
-        thetas=None,
-        spatial_freqs=None,
-        temporal_freqs=None,
+            self,
+            model,
+            amplitude,
+            rf_w,
+            rf_h,
+            duration,
+            dt,
+            thetas=None,
+            spatial_freqs=None,
+            temporal_freqs=None,
     ):
         self.model = model
         self.amplitude = amplitude
@@ -152,29 +152,20 @@ class GratingsProber:
 
     @staticmethod
     def generate_grating(
-        amplitude, rf_w, rf_h, theta, spatial_freq, temporal_freq, duration, dt
+            amplitude, rf_w, rf_h, theta, spatial_freq, temporal_freq, duration, dt
     ):
         y, x = torch.meshgrid(
             [
                 torch.arange(rf_h, dtype=torch.float32),
                 torch.arange(rf_w, dtype=torch.float32),
-<<<<<<< HEAD
-            ]
-=======
             ],
             indexing="ij"
->>>>>>> local-changes
         )
         theta = torch.Tensor([theta]).expand_as(y)
         spatial_freq = torch.Tensor([spatial_freq]).expand_as(y)
 
-<<<<<<< HEAD
-        fps = int(1000 // dt)
-        n_timesteps = int(duration // dt)
-=======
         fps = int(1000 / dt)
         n_timesteps = int(duration / dt)
->>>>>>> local-changes
         timesteps = (
             torch.arange(n_timesteps).view(n_timesteps, 1, 1).repeat(1, rf_h, rf_w)
         )
@@ -187,15 +178,15 @@ class GratingsProber:
         return grating
 
     def get_response_to_preferred_grating(
-        self,
-        amplitude,
-        rf_w,
-        rf_h,
-        duration,
-        dt,
-        unit_id=None,
-        batch_size=10,
-        device="cuda",
+            self,
+            amplitude,
+            rf_w,
+            rf_h,
+            duration,
+            dt,
+            unit_id=None,
+            batch_size=10,
+            device="cuda",
     ):
         gratings = self.generate_preferred_grating(
             amplitude, rf_w, rf_h, duration, dt, unit_id
@@ -208,9 +199,9 @@ class GratingsProber:
             batch_response_to_preferred_grating = []
 
             for i in range(
-                self._tuning_query.n_units // batch_size + 1
-                if self._tuning_query.n_units % batch_size > 0
-                else 0
+                    self._tuning_query.n_units // batch_size + 1
+                    if self._tuning_query.n_units % batch_size > 0
+                    else 0
             ):
                 batch_gratings = gratings[i * batch_size: (i + 1) * batch_size]
                 batch_response_to_preferred_grating.append(self.model(batch_gratings))
@@ -228,7 +219,7 @@ class GratingsProber:
             return response_to_preferred_grating
 
     def generate_preferred_grating(
-        self, amplitude, rf_w, rf_h, duration, dt, unit_id=None
+            self, amplitude, rf_w, rf_h, duration, dt, unit_id=None
     ):
         if unit_id is not None:
             return GratingsProber.generate_grating(

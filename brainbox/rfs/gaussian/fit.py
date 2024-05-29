@@ -190,8 +190,8 @@ class GaussianFitter:
         predictions = gaussian_model()
         losses = (
             F.mse_loss(repeated_rfs, predictions, reduction="none")
-            .mean(dim=(1, 2))
-            .view(n_rfs, n_params)
+                .mean(dim=(1, 2))
+                .view(n_rfs, n_params)
         )
         best_idxs = torch.argmin(losses, dim=1) + torch.Tensor(
             [n_params * i for i in range(n_rfs)]
@@ -209,18 +209,18 @@ class GaussianFitter:
 
 class SpatialGaussianFitter:
     def __init__(
-        self,
-        rfs,
-        n_iterations,
-        lr,
-        device,
-        rf_size,
-        amp_init,
-        x0_init,
-        y0_init,
-        sigmax_init,
-        sigmay_init,
-        p_init
+            self,
+            rfs,
+            n_iterations,
+            lr,
+            device,
+            rf_size,
+            amp_init,
+            x0_init,
+            y0_init,
+            sigmax_init,
+            sigmay_init,
+            p_init
     ):
         self._rfs = rfs
         self._n_iterations = n_iterations
@@ -306,12 +306,8 @@ class Gaussian2D(nn.Module):
             [
                 torch.arange(rf_size, dtype=torch.float32),
                 torch.arange(rf_size, dtype=torch.float32),
-<<<<<<< HEAD
-            ]
-=======
             ],
             indexing="ij"
->>>>>>> local-changes
         )
         self.y = nn.Parameter(y, requires_grad=False)
         self.x = nn.Parameter(x, requires_grad=False)
