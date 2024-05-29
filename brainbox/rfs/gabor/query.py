@@ -6,8 +6,8 @@ import pandas as pd
 
 from kornia import geometry
 
-from brainbox.physiology.rfs import rfs
-from brainbox.physiology.rfs.gabor.fit import GaborFitter, Gabor
+from brainbox.rfs import rfs
+from brainbox.rfs.gabor.fit import GaborFitter, Gabor
 
 logger = logging.getLogger("gabor")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)

@@ -1,8 +1,5 @@
 import os
-<<<<<<< HEAD
-=======
 import warnings
->>>>>>> local-changes
 
 import torch
 import torch.nn as nn
@@ -10,11 +7,8 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 
-<<<<<<< HEAD
-=======
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
->>>>>>> local-changes
 
 class TuningQuery:
     def __init__(self, path):
@@ -77,8 +71,8 @@ class TuningQuery:
 
         mean_responses = unit_mean_responses.mean().item()
         query = (
-            unit_statistics_df["mean_response"] > mean_responses * response_threshold
-        ) & (unit_statistics_df["fit_cc"] > fit_threshold)
+                        unit_statistics_df["mean_response"] > mean_responses * response_threshold
+                ) & (unit_statistics_df["fit_cc"] > fit_threshold)
 
         return unit_statistics_df[query]
 
@@ -102,12 +96,12 @@ class TuningQuery:
 
     def orientation_tuning_curve(self, unit_id):
         preferred_spatial_and_temporal_frequency_query = (
-            self._probes_df["spatial_frequency"]
-            == self.preferred_spatial_frequency(unit_id)
-        ) & (
-            self._probes_df["temporal_frequency"]
-            == self.preferred_temporal_frequency(unit_id)
-        )
+                                                                 self._probes_df["spatial_frequency"]
+                                                                 == self.preferred_spatial_frequency(unit_id)
+                                                         ) & (
+                                                                 self._probes_df["temporal_frequency"]
+                                                                 == self.preferred_temporal_frequency(unit_id)
+                                                         )
         response_per_theta = self._probes_df[
             preferred_spatial_and_temporal_frequency_query
         ]
@@ -119,9 +113,9 @@ class TuningQuery:
 
     def orientation_sf_tuning_curve(self, unit_id):
         preferred_temporal_frequency_query = (
-                 self._probes_df["temporal_frequency"]
-                 == self.preferred_temporal_frequency(unit_id)
-         )
+                self._probes_df["temporal_frequency"]
+                == self.preferred_temporal_frequency(unit_id)
+        )
         response_per_theta = self._probes_df[
             preferred_temporal_frequency_query
         ]
@@ -156,7 +150,7 @@ class TuningQuery:
 
         # Absolute orthogonal to preferred
         orthogonal_orientation = (self.preferred_direction(unit_id) + np.pi / 2) % (
-            2 * np.pi
+                2 * np.pi
         )
         # Nearest angle to that actually probed
         nearest_orthogonal_orientation_idx = np.abs(
@@ -167,18 +161,18 @@ class TuningQuery:
         orthogonal_orientation_response = self._probes_df[
             (self._probes_df["theta"] == orthogonal_orientation)
             & (
-                self._probes_df["temporal_frequency"]
-                == self.preferred_temporal_frequency(unit_id)
+                    self._probes_df["temporal_frequency"]
+                    == self.preferred_temporal_frequency(unit_id)
             )
             & (
-                self._probes_df["spatial_frequency"]
-                == self.preferred_spatial_frequency(unit_id)
+                    self._probes_df["spatial_frequency"]
+                    == self.preferred_spatial_frequency(unit_id)
             )
-        ][str(unit_id)].values[0]
+            ][str(unit_id)].values[0]
 
         return (
-            self.preferred_model_output(unit_id) - orthogonal_orientation_response
-        ) / (self.preferred_model_output(unit_id) + orthogonal_orientation_response)
+                       self.preferred_model_output(unit_id) - orthogonal_orientation_response
+               ) / (self.preferred_model_output(unit_id) + orthogonal_orientation_response)
 
     def direction_selectivity_index(self, unit_id):
         thetas = self._probes_df["theta"].unique()
@@ -192,17 +186,17 @@ class TuningQuery:
         opposite_direction_response = self._probes_df[
             (self._probes_df["theta"] == nearest_opposite_orientation)
             & (
-                self._probes_df["temporal_frequency"]
-                == self.preferred_temporal_frequency(unit_id)
+                    self._probes_df["temporal_frequency"]
+                    == self.preferred_temporal_frequency(unit_id)
             )
             & (
-                self._probes_df["spatial_frequency"]
-                == self.preferred_spatial_frequency(unit_id)
+                    self._probes_df["spatial_frequency"]
+                    == self.preferred_spatial_frequency(unit_id)
             )
-        ][str(unit_id)].values[0]
+            ][str(unit_id)].values[0]
 
         return (self.preferred_model_output(unit_id) - opposite_direction_response) / (
-            self.preferred_model_output(unit_id) + opposite_direction_response
+                self.preferred_model_output(unit_id) + opposite_direction_response
         )
 
     # @property

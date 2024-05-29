@@ -1,6 +1,6 @@
 import torch
 
-from brainbox.physiology import util
+from brainbox import util
 
 
 def generate_spike_tensor(b=2, n=10, t=100, f=0.1):

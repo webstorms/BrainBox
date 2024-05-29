@@ -4,14 +4,14 @@ from brainbox.physiology import util
 
 
 def compute_isi_cvs_for_dataset(
-    input_to_spikes,
-    n_spikes_thresh,
-    dataset,
-    batch_size,
-    device="cuda",
-    dtype=torch.float,
-    max_batches=None,
-    **kwargs
+        input_to_spikes,
+        n_spikes_thresh,
+        dataset,
+        batch_size,
+        device="cuda",
+        dtype=torch.float,
+        max_batches=None,
+        **kwargs
 ):
     get_isi_cvs = lambda data, _: compute_isi_cvs(
         compute_isis_tensor(input_to_spikes(data)), n_spikes_thresh
@@ -27,11 +27,7 @@ def compute_isi_cvs(isis_tensor, n_spikes_thresh):
     cvs = std / mean
 
     invalid_cv_mask = (isis_tensor != 0).sum(dim=2) < n_spikes_thresh
-<<<<<<< HEAD
-    cvs[invalid_cv_mask] = 0
-=======
     cvs[invalid_cv_mask] = -1
->>>>>>> local-changes
 
     return cvs
 

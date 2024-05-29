@@ -29,7 +29,7 @@ class GaussianQuery:
         self._params_df["cc"] = self._get_correlation()
 
     def validate(
-        self, min_cc, min_env, separability=None, inseperable_thresh=0.5, verbose=True
+            self, min_cc, min_env, separability=None, inseperable_thresh=0.5, verbose=True
     ):
         query = self._query_cc(min_cc)
         query &= self._query_location()
