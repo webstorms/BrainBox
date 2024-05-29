@@ -1,0 +1,7 @@
+pandas
+h5py
+torch
+torchvision
+kornia
+scipy
+scikit-learn

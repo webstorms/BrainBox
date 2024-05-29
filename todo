@@ -1,0 +1,2 @@
+#
+physiology.rfs.gabor and gaussian share much code (duplication). refactor and clean up!

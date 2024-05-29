@@ -1,0 +1,9 @@
+name: brainbox
+dependencies:
+  - python=3.8
+  - black
+  - pytest
+  - nb_conda_kernels=2.3.1
+  - pip:
+    - -r requirements.txt
+    - --editable .
