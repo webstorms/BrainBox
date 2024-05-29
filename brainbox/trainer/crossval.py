@@ -118,6 +118,13 @@ class BaseValidationTrainer:
         val_batch_size = trainer.batch_size if self._val_batch_size is None else self._val_batch_size
         score = compute_metric(model, dataset, val_loss, val_batch_size, trainer.device, trainer.dtype)
 
+<<<<<<< HEAD
+=======
+        # Fixes GPU memory clogging up
+        del model
+        torch.cuda.empty_cache()
+
+>>>>>>> local-changes
         return torch.Tensor(score).sum().item()
 
 

@@ -339,7 +339,12 @@ class Gabor(nn.Module):
             [
                 torch.arange(rf_size, dtype=torch.float32),
                 torch.arange(rf_size, dtype=torch.float32),
+<<<<<<< HEAD
             ]
+=======
+            ],
+            indexing="ij"
+>>>>>>> local-changes
         )
         self.y = nn.Parameter(y, requires_grad=False)
         self.x = nn.Parameter(x, requires_grad=False)

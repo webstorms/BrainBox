@@ -277,4 +277,9 @@ class PatchPredictionTemporalDataset(PredictionTemporalDataset):
         if self._target_transform is not None:
             y = self._target_transform(y)
 
+<<<<<<< HEAD
         return x, y
+=======
+        # return x, y
+        return x, x
+>>>>>>> local-changes

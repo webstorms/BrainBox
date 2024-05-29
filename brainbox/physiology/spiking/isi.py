@@ -27,7 +27,11 @@ def compute_isi_cvs(isis_tensor, n_spikes_thresh):
     cvs = std / mean
 
     invalid_cv_mask = (isis_tensor != 0).sum(dim=2) < n_spikes_thresh
+<<<<<<< HEAD
     cvs[invalid_cv_mask] = 0
+=======
+    cvs[invalid_cv_mask] = -1
+>>>>>>> local-changes
 
     return cvs
 
