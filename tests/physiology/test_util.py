@@ -7,7 +7,7 @@ def generate_spike_tensor(b=2, n=10, t=100, f=0.1):
     foo = torch.rand(b, n, t)
     foo[foo >= f] = 0
     foo[foo != 0] = 1
-    
+
     return foo
 
 
