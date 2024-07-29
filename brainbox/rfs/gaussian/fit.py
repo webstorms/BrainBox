@@ -25,16 +25,16 @@ class GaussianFitter:
         pass
 
     def fit_spatial(
-            self,
-            path,
-            rfs,
-            batch_size,
-            n_spectral_iterations=2000,
-            n_spatial_iterations=2000,
-            spectral_lr=1e-2,
-            spatial_lr=1e-2,
-            device="cuda",
-            **kwargs,
+        self,
+        path,
+        rfs,
+        batch_size,
+        n_spectral_iterations=2000,
+        n_spatial_iterations=2000,
+        spectral_lr=1e-2,
+        spatial_lr=1e-2,
+        device="cuda",
+        **kwargs,
     ):
         batch_params = []
 
@@ -62,20 +62,20 @@ class GaussianFitter:
                 "y0": all_params[2],
                 "sigmax": all_params[3],
                 "sigmay": all_params[4],
-                "p": all_params[5]
+                "p": all_params[5],
             }
         )
         all_params_df.to_csv(path, index=False)
 
     def fit_spatial_single_batch(
-            self,
-            rfs,
-            n_spectral_iterations=1000,
-            n_spatial_iterations=2000,
-            spectral_lr=1e-2,
-            spatial_lr=1e-3,
-            device="cuda",
-            **kwargs,
+        self,
+        rfs,
+        n_spectral_iterations=1000,
+        n_spatial_iterations=2000,
+        spectral_lr=1e-2,
+        spatial_lr=1e-3,
+        device="cuda",
+        **kwargs,
     ):
         n_rfs = rfs.shape[0]
         rf_size = rfs.shape[-1]
@@ -145,12 +145,7 @@ class GaussianFitter:
 
         params_product = list(
             itertools.product(
-                amps_init,
-                x0_init,
-                y0_init,
-                sigmax_init,
-                sigmay_init,
-                p_init
+                amps_init, x0_init, y0_init, sigmax_init, sigmay_init, p_init
             )
         )
         amps_init = torch.Tensor(repeat * [v[0] for v in params_product])
@@ -160,14 +155,7 @@ class GaussianFitter:
         sigmay_init = torch.Tensor(repeat * [v[4] for v in params_product])
         p_init = torch.Tensor(repeat * [v[5] for v in params_product])
 
-        return (
-            amps_init,
-            x0_init,
-            y0_init,
-            sigmax_init,
-            sigmay_init,
-            p_init
-        )
+        return (amps_init, x0_init, y0_init, sigmax_init, sigmay_init, p_init)
 
     @staticmethod
     def _extract_gaussian_params(gaussian_model):
@@ -190,8 +178,8 @@ class GaussianFitter:
         predictions = gaussian_model()
         losses = (
             F.mse_loss(repeated_rfs, predictions, reduction="none")
-                .mean(dim=(1, 2))
-                .view(n_rfs, n_params)
+            .mean(dim=(1, 2))
+            .view(n_rfs, n_params)
         )
         best_idxs = torch.argmin(losses, dim=1) + torch.Tensor(
             [n_params * i for i in range(n_rfs)]
@@ -209,30 +197,24 @@ class GaussianFitter:
 
 class SpatialGaussianFitter:
     def __init__(
-            self,
-            rfs,
-            n_iterations,
-            lr,
-            device,
-            rf_size,
-            amp_init,
-            x0_init,
-            y0_init,
-            sigmax_init,
-            sigmay_init,
-            p_init
+        self,
+        rfs,
+        n_iterations,
+        lr,
+        device,
+        rf_size,
+        amp_init,
+        x0_init,
+        y0_init,
+        sigmax_init,
+        sigmay_init,
+        p_init,
     ):
         self._rfs = rfs
         self._n_iterations = n_iterations
 
         self._gaussian_model = Gaussian2D(
-            rf_size,
-            amp_init,
-            x0_init,
-            y0_init,
-            sigmax_init,
-            sigmay_init,
-            p_init
+            rf_size, amp_init, x0_init, y0_init, sigmax_init, sigmay_init, p_init
         ).to(device)
         self._optimizer = torch.optim.Adam(self._gaussian_model.parameters(), lr)
 
@@ -248,24 +230,24 @@ class SpatialGaussianFitter:
             self._optimizer.zero_grad()
             loss = F.mse_loss(self._rfs, self.prediction())
             loss.backward()
-            #print(f"loss={loss.item()}")
+            # print(f"loss={loss.item()}")
             self._optimizer.step()
 
 
 class SpectralGaussianFitter(SpatialGaussianFitter):
     def __init__(
-            self,
-            rfs,
-            n_iterations,
-            lr,
-            device,
-            rf_size,
-            amp_init,
-            x0_init,
-            y0_init,
-            sigmax_init,
-            sigmay_init,
-            p_init
+        self,
+        rfs,
+        n_iterations,
+        lr,
+        device,
+        rf_size,
+        amp_init,
+        x0_init,
+        y0_init,
+        sigmax_init,
+        sigmay_init,
+        p_init,
     ):
         super().__init__(
             rfs,
@@ -278,7 +260,7 @@ class SpectralGaussianFitter(SpatialGaussianFitter):
             y0_init,
             sigmax_init,
             sigmay_init,
-            p_init
+            p_init,
         )
         self._rfs = SpectralGaussianFitter._to_spectral(rfs)
 
@@ -291,8 +273,17 @@ class SpectralGaussianFitter(SpatialGaussianFitter):
 
 
 class Gaussian2D(nn.Module):
-
-    def __init__(self, rf_size=20, amp_init=None, x0_init=None, y0_init=None, sigmax_init=None, sigmay_init=None, p_init=None, eps=1e-4):
+    def __init__(
+        self,
+        rf_size=20,
+        amp_init=None,
+        x0_init=None,
+        y0_init=None,
+        sigmax_init=None,
+        sigmay_init=None,
+        p_init=None,
+        eps=1e-4,
+    ):
         super().__init__()
         self._amplitude = nn.Parameter(amp_init)
         self._x0 = nn.Parameter(x0_init)
@@ -307,7 +298,7 @@ class Gaussian2D(nn.Module):
                 torch.arange(rf_size, dtype=torch.float32),
                 torch.arange(rf_size, dtype=torch.float32),
             ],
-            indexing="ij"
+            indexing="ij",
         )
         self.y = nn.Parameter(y, requires_grad=False)
         self.x = nn.Parameter(x, requires_grad=False)
@@ -315,7 +306,7 @@ class Gaussian2D(nn.Module):
 
     @property
     def amplitude(self):
-        return self._amplitude#torch.clamp(self._amplitude, min=-1, max=1)
+        return self._amplitude  # torch.clamp(self._amplitude, min=-1, max=1)
 
     @property
     def x0(self):
@@ -347,7 +338,16 @@ class Gaussian2D(nn.Module):
 
         x = self.x - x0
         y = self.y - y0
-        gaussian = (1 / (2 * np.pi * sigmax * sigmay * torch.sqrt(1 - p**2))) * torch.exp(-(1 / (2 * (1 - p**2))) * ((x / sigmax)**2 -2 * p * (x / sigmax) * (y / sigmay) + (y / sigmay) ** 2))
+        gaussian = (
+            1 / (2 * np.pi * sigmax * sigmay * torch.sqrt(1 - p**2))
+        ) * torch.exp(
+            -(1 / (2 * (1 - p**2)))
+            * (
+                (x / sigmax) ** 2
+                - 2 * p * (x / sigmax) * (y / sigmay)
+                + (y / sigmay) ** 2
+            )
+        )
 
         return amplitude * gaussian
 

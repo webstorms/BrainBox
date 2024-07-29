@@ -40,9 +40,19 @@ def similarity(mat1, mat2, method="spearman", deviation=False):
         return 1 - corr
 
 
-def similarity_bootstrap(X, Y, method="spearman", nboot=100, sim_mat=True, deviation=False):
+def similarity_bootstrap(
+    X, Y, method="spearman", nboot=100, sim_mat=True, deviation=False
+):
     sim_func = compute_rsm if sim_mat else compute_rdm
     mat1 = sim_func(X)
-    sim_scores = [similarity(mat1, sim_func(Y[:, np.random.randint(low=0, high=Y.shape[1], size=Y.shape[1])]), method, deviation) for _ in range(nboot)]
+    sim_scores = [
+        similarity(
+            mat1,
+            sim_func(Y[:, np.random.randint(low=0, high=Y.shape[1], size=Y.shape[1])]),
+            method,
+            deviation,
+        )
+        for _ in range(nboot)
+    ]
 
     return torch.Tensor(sim_scores)

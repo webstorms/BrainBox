@@ -9,15 +9,15 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 def run_function_on_batch(
-        function,
-        dataset,
-        batch_size,
-        data_device="cuda",
-        dtype=torch.float,
-        max_batches=None,
-        verbose=True,
-        store_on_cpu=False,
-        **kwargs,
+    function,
+    dataset,
+    batch_size,
+    data_device="cuda",
+    dtype=torch.float,
+    max_batches=None,
+    verbose=True,
+    store_on_cpu=False,
+    **kwargs,
 ):
     data_loader = torch.utils.data.DataLoader(dataset, batch_size, **kwargs)
 

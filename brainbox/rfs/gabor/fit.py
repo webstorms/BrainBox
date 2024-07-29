@@ -26,16 +26,16 @@ class GaborFitter:
         pass
 
     def fit_spatial(
-            self,
-            path,
-            rfs,
-            batch_size,
-            n_spectral_iterations=1000,
-            n_spatial_iterations=2000,
-            spectral_lr=1e-2,
-            spatial_lr=1e-3,
-            device="cuda",
-            **kwargs,
+        self,
+        path,
+        rfs,
+        batch_size,
+        n_spectral_iterations=1000,
+        n_spatial_iterations=2000,
+        spectral_lr=1e-2,
+        spatial_lr=1e-3,
+        device="cuda",
+        **kwargs,
     ):
         batch_params = []
 
@@ -70,14 +70,14 @@ class GaborFitter:
         all_params_df.to_csv(path, index=False)
 
     def fit_spatial_single_batch(
-            self,
-            rfs,
-            n_spectral_iterations=1000,
-            n_spatial_iterations=2000,
-            spectral_lr=1e-2,
-            spatial_lr=1e-3,
-            device="cuda",
-            **kwargs,
+        self,
+        rfs,
+        n_spectral_iterations=1000,
+        n_spatial_iterations=2000,
+        spectral_lr=1e-2,
+        spatial_lr=1e-3,
+        device="cuda",
+        **kwargs,
     ):
         n_rfs = rfs.shape[0]
         rf_size = rfs.shape[-1]
@@ -115,12 +115,12 @@ class GaborFitter:
         )
 
     def fit_spatiotemporal(
-            self,
-            strfs,
-            gabor_params,
-            n_spatial_iterations=100,
-            spatial_lr=1e-3,
-            device="cuda",
+        self,
+        strfs,
+        gabor_params,
+        n_spatial_iterations=100,
+        spatial_lr=1e-3,
+        device="cuda",
     ):
         rf_size = strfs.shape[-1]
         normalized_strfs = rfs_util.normalize_strfs(strfs).flatten(
@@ -202,8 +202,8 @@ class GaborFitter:
         predictions = gabor_model()
         losses = (
             F.mse_loss(repeated_rfs, predictions, reduction="none")
-                .mean(dim=(1, 2))
-                .view(n_rfs, n_params)
+            .mean(dim=(1, 2))
+            .view(n_rfs, n_params)
         )
         best_idxs = torch.argmin(losses, dim=1) + torch.Tensor(
             [n_params * i for i in range(n_rfs)]
@@ -222,20 +222,20 @@ class GaborFitter:
 
 class SpatialFitter:
     def __init__(
-            self,
-            rfs,
-            freeze,
-            n_iterations,
-            lr,
-            device,
-            rf_size,
-            x0_init,
-            y0_init,
-            sigmax_init,
-            sigmay_init,
-            theta_init,
-            phi_init,
-            frequency_init,
+        self,
+        rfs,
+        freeze,
+        n_iterations,
+        lr,
+        device,
+        rf_size,
+        x0_init,
+        y0_init,
+        sigmax_init,
+        sigmay_init,
+        theta_init,
+        phi_init,
+        frequency_init,
     ):
         self._rfs = rfs
         self._n_iterations = n_iterations
@@ -270,20 +270,20 @@ class SpatialFitter:
 
 class SpectralFitter(SpatialFitter):
     def __init__(
-            self,
-            rfs,
-            freeze,
-            n_iterations,
-            lr,
-            device,
-            rf_size,
-            x0_init,
-            y0_init,
-            sigmax_init,
-            sigmay_init,
-            theta_init,
-            phi_init,
-            frequency_init,
+        self,
+        rfs,
+        freeze,
+        n_iterations,
+        lr,
+        device,
+        rf_size,
+        x0_init,
+        y0_init,
+        sigmax_init,
+        sigmay_init,
+        theta_init,
+        phi_init,
+        frequency_init,
     ):
         super().__init__(
             rfs,
@@ -312,17 +312,17 @@ class SpectralFitter(SpatialFitter):
 
 class Gabor(nn.Module):
     def __init__(
-            self,
-            freeze=False,
-            rf_size=20,
-            x0_init=None,
-            y0_init=None,
-            sigmax_init=None,
-            sigmay_init=None,
-            theta_init=None,
-            phi_init=None,
-            frequency_init=None,
-            eps=1e-3,
+        self,
+        freeze=False,
+        rf_size=20,
+        x0_init=None,
+        y0_init=None,
+        sigmax_init=None,
+        sigmay_init=None,
+        theta_init=None,
+        phi_init=None,
+        frequency_init=None,
+        eps=1e-3,
     ):
         super().__init__()
         self._amplitude = nn.Parameter(torch.ones(len(x0_init)), requires_grad=True)
@@ -340,7 +340,7 @@ class Gabor(nn.Module):
                 torch.arange(rf_size, dtype=torch.float32),
                 torch.arange(rf_size, dtype=torch.float32),
             ],
-            indexing="ij"
+            indexing="ij",
         )
         self.y = nn.Parameter(y, requires_grad=False)
         self.x = nn.Parameter(x, requires_grad=False)

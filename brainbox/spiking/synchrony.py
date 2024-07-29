@@ -5,7 +5,6 @@ from .rate import bin_spikes
 
 
 def compute_synchronization_df(cross_covariance_matrix, dt=25):
-
     def time_pair_to_lag(i, j, dt):
         return (i - j) * dt
 
@@ -31,7 +30,9 @@ def compute_synchronization(spike_trains, n_pairs, dt=8, bin_dt=25, normalize=Tr
         binned_spikes, from_idxs, to_idxs
     )
 
-    return cross_covariance_matrix(from_binned_spikes, to_binned_spikes, normalize=normalize)
+    return cross_covariance_matrix(
+        from_binned_spikes, to_binned_spikes, normalize=normalize
+    )
 
 
 def generate_spike_pairing_tensors(binned_spikes, from_idxs, to_idxs):

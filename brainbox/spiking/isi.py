@@ -4,14 +4,14 @@ from brainbox.spiking import util
 
 
 def compute_isi_cvs_for_dataset(
-        input_to_spikes,
-        n_spikes_thresh,
-        dataset,
-        batch_size,
-        device="cuda",
-        dtype=torch.float,
-        max_batches=None,
-        **kwargs
+    input_to_spikes,
+    n_spikes_thresh,
+    dataset,
+    batch_size,
+    device="cuda",
+    dtype=torch.float,
+    max_batches=None,
+    **kwargs
 ):
     get_isi_cvs = lambda data, _: compute_isi_cvs(
         compute_isis_tensor(input_to_spikes(data)), n_spikes_thresh

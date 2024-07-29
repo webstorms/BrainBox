@@ -149,7 +149,6 @@ class ClipRandomHorizontalFlip(BBTransform):
 
 
 class ClipExtend(BBTransform):
-
     def __init__(self, frames):
         self._frames = frames
         self._kernel = torch.ones(1, 1, frames, 1, 1)
@@ -167,7 +166,6 @@ class ClipExtend(BBTransform):
 
 
 class ClipShrink(BBTransform):
-
     def __init__(self, frames):
         self._frames = frames
         self._kernel = torch.ones(1, 1, frames, 1, 1)
@@ -190,7 +188,7 @@ class ImgToClip(BBTransform):
         self._repeats = repeats
         self._post_blanks = post_blanks
         self._c = c
-    
+
     def __call__(self, img):
         if len(img.shape) == 3:
             # img: channel x height x width
@@ -225,7 +223,11 @@ class ImgToClip(BBTransform):
                     width,
                 )
             )
-            clip[:, :, self._pre_blanks : self._pre_blanks + self._repeats] = img.unsqueeze(2)  # Add fake time dim to img
+            clip[
+                :, :, self._pre_blanks : self._pre_blanks + self._repeats
+            ] = img.unsqueeze(
+                2
+            )  # Add fake time dim to img
 
         return clip
 
@@ -274,7 +276,7 @@ class GaussianKernel(BBTransform):
 
     def _build_kernel(self, sigma, width):
         kernel = [
-            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-((x)**2) / (2 * sigma**2)))
+            (1 / (np.sqrt(2 * np.pi) * sigma) * np.exp(-((x) ** 2) / (2 * sigma**2)))
             for x in np.arange(-width // 2 + 1, width // 2 + 1, 1)
         ]
         return torch.Tensor(kernel).view(1, 1, width, 1)
