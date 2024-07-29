@@ -9,7 +9,7 @@ import torch.fft as fft
 import torch.nn as nn
 import torch.nn.functional as F
 
-import brainbox.physiology.rfs.rfs as rfs_util
+import brainbox.rfs.rfs as rfs_util
 
 logger = logging.getLogger("gaussian")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
