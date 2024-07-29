@@ -75,15 +75,15 @@ def get_temporal_power_profile(spatiotemporal_rfs):
 
 
 def sta(
-        input_to_spikes,
-        rf_len,
-        rf_h,
-        rf_w,
-        t_len,
-        noise_var=10,
-        samples=10,
-        batch_size=2000,
-        device="cuda",
+    input_to_spikes,
+    rf_len,
+    rf_h,
+    rf_w,
+    t_len,
+    noise_var=10,
+    samples=10,
+    batch_size=2000,
+    device="cuda",
 ):
 
     model_rfs = 0

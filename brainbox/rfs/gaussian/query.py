@@ -29,7 +29,7 @@ class GaussianQuery:
         self._params_df["cc"] = self._get_correlation()
 
     def validate(
-            self, min_cc, min_env, separability=None, inseperable_thresh=0.5, verbose=True
+        self, min_cc, min_env, separability=None, inseperable_thresh=0.5, verbose=True
     ):
         query = self._query_cc(min_cc)
         query &= self._query_location()
@@ -92,18 +92,14 @@ class GaussianQuery:
             )[0, 1]
 
         return [
-            correlation(gaussian, rf) for gaussian, rf in zip(self._gaussians, self._spatial_rfs)
+            correlation(gaussian, rf)
+            for gaussian, rf in zip(self._gaussians, self._spatial_rfs)
         ]
 
     def _build_gaussians(self):
-        (
-            amp,
-            x0,
-            y0,
-            sigmax,
-            sigmay,
-            p
-        ) = GaussianQuery._df_params_to_gaussian_params(self._params_df)
+        (amp, x0, y0, sigmax, sigmay, p) = GaussianQuery._df_params_to_gaussian_params(
+            self._params_df
+        )
 
         return Gaussian2D(
             rf_size=self._rf_size,
