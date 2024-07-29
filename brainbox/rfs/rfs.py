@@ -28,7 +28,6 @@ def normalize_strfs(strf):
 
 
 def get_highest_power_spatial_rf(spatiotemporal_rf):
-
     """
     Obtain the spatial RF from the spatiotemporal RF with the largest mean power. The mean power is calculated as the
     mean over both spatial dimensions of the squared values of the spatial RFs at every time step.
