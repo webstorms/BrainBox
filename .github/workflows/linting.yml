@@ -20,4 +20,4 @@ jobs:
           pip install -r requirements.txt
       - name: Running linting
         run: |
-          black --check .
+          black --check --diff .
