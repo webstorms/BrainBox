@@ -89,6 +89,7 @@ def sta(
     model_rfs = 0
 
     for i in range(samples // batch_size):
+
         logger.info(f"Processing batch {i} out of {samples // batch_size}...")
         noise = torch.normal(
             0, noise_var, (min(batch_size, samples - i * batch_size), t_len, rf_h, rf_w)

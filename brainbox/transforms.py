@@ -292,6 +292,7 @@ class HanningKernel(BBTransform):
         )
 
     def __call__(self, x):
+        
         # x: b x n x t
         self._kernel = self._kernel.to(x.device)
 
