@@ -8,7 +8,7 @@ import torch
 import pandas as pd
 import numpy as np
 
-from brainbox.physiology.tuning.query import TuningQuery
+from brainbox.tuning.query import TuningQuery
 
 logger = logging.getLogger("tuning")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)

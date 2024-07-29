@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from brainbox import util
+from brainbox.spiking import util
 
 
 def compute_firing_rates_for_dataset(

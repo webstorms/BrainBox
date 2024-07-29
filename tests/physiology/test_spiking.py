@@ -1,7 +1,7 @@
 import numpy as np
 
 from brainbox import spiking
-from tests.physiology import test_util
+from tests import test_util
 
 
 def test_isis():

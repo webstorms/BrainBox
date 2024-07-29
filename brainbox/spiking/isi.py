@@ -1,6 +1,6 @@
 import torch
 
-from brainbox.physiology import util
+from brainbox.spiking import util
 
 
 def compute_isi_cvs_for_dataset(

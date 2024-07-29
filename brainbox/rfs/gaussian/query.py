@@ -6,8 +6,8 @@ import pandas as pd
 
 from kornia import geometry
 
-from brainbox.physiology.rfs import rfs
-from brainbox.physiology.rfs.gaussian.fit import Gaussian2D
+from brainbox.rfs import rfs
+from brainbox.rfs.gaussian.fit import Gaussian2D
 
 logger = logging.getLogger("gaussian")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
