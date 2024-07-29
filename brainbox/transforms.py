@@ -223,10 +223,8 @@ class ImgToClip(BBTransform):
                     width,
                 )
             )
-            clip[
-                :, :, self._pre_blanks : self._pre_blanks + self._repeats
-            ] = img.unsqueeze(
-                2
+            clip[:, :, self._pre_blanks : self._pre_blanks + self._repeats] = (
+                img.unsqueeze(2)
             )  # Add fake time dim to img
 
         return clip
