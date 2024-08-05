@@ -14,6 +14,9 @@ import brainbox.rfs.rfs as rfs_util
 logger = logging.getLogger("gaussian")
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
+# TODO: This could benefit from more refactoring.
+# - remove all spectral_fitter code (which was copied over from Gabor fitting)
+
 
 class GaussianFitter:
 
@@ -87,15 +90,6 @@ class GaussianFitter:
             rfs_util.normalize_rfs(rfs), n_params, 0
         ).to(device)
 
-        # spectral_fitter = SpectralGaussianFitter(
-        #     normalized_rfs,
-        #     n_spectral_iterations,
-        #     spectral_lr,
-        #     device,
-        #     rf_size,
-        #     *initial_gabor_params,
-        # )
-        # spectral_fitter.fit()
         spatial_fitter = SpatialGaussianFitter(
             normalized_rfs,
             n_spatial_iterations,
@@ -109,31 +103,6 @@ class GaussianFitter:
         return GaussianFitter._get_best_fits(
             normalized_rfs, spatial_fitter.gaussian_model, n_params, n_rfs
         )
-
-    # def fit_spatiotemporal(
-    #     self,
-    #     strfs,
-    #     gabor_params,
-    #     n_spatial_iterations=100,
-    #     spatial_lr=1e-3,
-    #     device="cuda",
-    # ):
-    #     rf_size = strfs.shape[-1]
-    #     normalized_strfs = rfs_util.normalize_strfs(strfs).flatten(
-    #         start_dim=0, end_dim=1
-    #     )
-    #     spatial_fitter = SpatialFitter(
-    #         normalized_strfs,
-    #         True,
-    #         n_spatial_iterations,
-    #         spatial_lr,
-    #         device,
-    #         rf_size,
-    #         *gabor_params,
-    #     )
-    #     spatial_fitter.fit()
-    #
-    #     return spatial_fitter.gabor_model.cpu()
 
     @staticmethod
     def _build_initial_gaussian_params(rf_size, repeat, **kwargs):

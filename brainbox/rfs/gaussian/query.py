@@ -25,11 +25,10 @@ class GaussianQuery:
         self._rf_size = strfs.shape[-1]
         self._spatial_rfs = rfs.get_all_highest_power_spatial_rf(strfs)
         self._gaussians = self._build_gaussians()
-        print(len(self._get_correlation()))
         self._params_df["cc"] = self._get_correlation()
 
     def validate(
-        self, min_cc, min_env, separability=None, inseperable_thresh=0.5, verbose=True
+        self, min_cc, min_env=0.5, separability=None, inseperable_thresh=0.5, verbose=True
     ):
         query = self._query_cc(min_cc)
         query &= self._query_location()
