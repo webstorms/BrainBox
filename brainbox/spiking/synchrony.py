@@ -23,19 +23,19 @@ def compute_synchronization_df(cross_covariance_matrix, dt=25):
 
 
 def compute_synchronization(spike_trains, n_pairs, dt=8, bin_dt=25, normalize=True):
-    from_idxs, to_idxs = generate_pairs(spike_trains.shape[1], n_pairs)
+    from_idxs, to_idxs = _generate_pairs(spike_trains.shape[1], n_pairs)
     binned_spikes = bin_spikes(spike_trains, dt, bin_dt, bin_dt)
 
-    from_binned_spikes, to_binned_spikes = generate_spike_pairing_tensors(
+    from_binned_spikes, to_binned_spikes = _generate_spike_pairing_tensors(
         binned_spikes, from_idxs, to_idxs
     )
 
-    return cross_covariance_matrix(
+    return _cross_covariance_matrix(
         from_binned_spikes, to_binned_spikes, normalize=normalize
     )
 
 
-def generate_spike_pairing_tensors(binned_spikes, from_idxs, to_idxs):
+def _generate_spike_pairing_tensors(binned_spikes, from_idxs, to_idxs):
     # b x n x t
     from_binned_spikes = binned_spikes[:, from_idxs]
     to_binned_spikes = binned_spikes[:, to_idxs]
@@ -43,7 +43,7 @@ def generate_spike_pairing_tensors(binned_spikes, from_idxs, to_idxs):
     return from_binned_spikes, to_binned_spikes
 
 
-def generate_pairs(n_neurons, n_pairs):
+def _generate_pairs(n_neurons, n_pairs):
     from_idxs = torch.randint(0, n_neurons, (n_pairs,))
     to_idxs = torch.randint(0, n_neurons, (n_pairs,))
 
@@ -55,7 +55,7 @@ def generate_pairs(n_neurons, n_pairs):
     return from_idxs, to_idxs
 
 
-def cross_covariance_matrix(x, y, normalize=True):
+def _cross_covariance_matrix(x, y, normalize=True):
     x_min_mean = x - x.mean((0, 2)).view(1, -1, 1)
     y_min_mean = y - y.mean((0, 2)).view(1, -1, 1)
 
