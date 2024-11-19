@@ -3,35 +3,6 @@ import torch
 from brainbox.spiking import util
 
 
-def compute_isi_cvs_for_dataset(
-    input_to_spikes,
-    n_spikes_thresh,
-    dataset,
-    batch_size,
-    device="cuda",
-    dtype=torch.float,
-    max_batches=None,
-    **kwargs
-):
-    get_isi_cvs = lambda data, _: compute_isi_cvs(
-        compute_isis_tensor(input_to_spikes(data)), n_spikes_thresh
-    )
-    return util.run_function_on_batch(
-        get_isi_cvs, dataset, batch_size, device, dtype, max_batches, **kwargs
-    )
-
-
-def compute_isi_cvs(isis_tensor, n_spikes_thresh):
-    mean = util.get_mean(isis_tensor)
-    std = util.get_std(isis_tensor, mean=mean)
-    cvs = std / mean
-
-    invalid_cv_mask = (isis_tensor != 0).sum(dim=2) < n_spikes_thresh
-    cvs[invalid_cv_mask] = -1
-
-    return cvs
-
-
 def compute_isis_tensor(spike_trains):
     # spike_trains: b x n x t
     spike_trains = spike_trains.type(torch.int16)
@@ -54,3 +25,14 @@ def compute_isis_tensor(spike_trains):
     isis_tensor[isis_tensor < 0] = 0  # Remove first spike occurrence
 
     return isis_tensor
+
+
+def compute_isi_cvs(isis_tensor, n_spikes_thresh):
+    mean = util.get_mean(isis_tensor)
+    std = util.get_std(isis_tensor, mean=mean)
+    cvs = std / mean
+
+    invalid_cv_mask = (isis_tensor != 0).sum(dim=2) < n_spikes_thresh
+    cvs[invalid_cv_mask] = -1
+
+    return cvs
