@@ -22,8 +22,11 @@ def compute_synchronization_df(cross_covariance_matrix, dt=25):
     return pd.DataFrame(synchrony)
 
 
-def compute_synchronization(spike_trains, n_pairs, dt=8, bin_dt=25, normalize=True):
-    from_idxs, to_idxs = _generate_pairs(spike_trains.shape[1], n_pairs)
+def compute_synchronization(spike_trains, n_pairs, dt=8, bin_dt=25, normalize=True, from_idxs=None, to_idxs=None):
+    if from_idxs is None and to_idxs is None:
+        from_idxs, to_idxs = _generate_pairs(spike_trains.shape[1], n_pairs)
+    else:
+        from_idxs, to_idxs = _generate_pairs_from_idxs(n_pairs, from_idxs, to_idxs)
     binned_spikes = bin_spikes(spike_trains, dt, bin_dt, bin_dt)
 
     from_binned_spikes, to_binned_spikes = _generate_spike_pairing_tensors(
@@ -53,6 +56,21 @@ def _generate_pairs(n_neurons, n_pairs):
             to_idxs[i] -= 1
 
     return from_idxs, to_idxs
+
+
+def _generate_pairs_from_idxs(n_pairs, from_idxs, to_idxs):
+    random_from_idxs = torch.randint(0, len(from_idxs), (n_pairs,))
+    random_to_idxs = torch.randint(0, len(to_idxs), (n_pairs,))
+
+    sampled_from_idxs = from_idxs[random_from_idxs].long()
+    sampled_to_idxs = to_idxs[random_to_idxs].long()
+
+    # Avoid sampling identical idxs for pairing
+    for i in range(n_pairs):
+        if sampled_from_idxs[i] == sampled_to_idxs[i]:
+            sampled_to_idxs[i] = to_idxs[(random_to_idxs[i]+1) % len(to_idxs)]
+
+    return sampled_from_idxs, sampled_to_idxs
 
 
 def _cross_covariance_matrix(x, y, normalize=True):
