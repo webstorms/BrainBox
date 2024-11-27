@@ -29,15 +29,15 @@ The following notebooks contain example code showing how to use BrainBox for spe
 - [Fitting Gabors](../notebooks/RFs%20-%20Fitting%20Gabor%20functions.ipynb)
 
 #### Spikes
-- [Binning and smoothing](../notebooks/Spikes%20-%20Binning and smoothing spike trains.ipynb)
-- [ISIs and CVs](../notebooks/Spikes%20-%20Calculating ISIs and CVs.ipynb)
-- [Cross-correlograms](../notebooks/Spikes%20-%20Calculating cross-correlograms.ipynb)
+- [Binning and smoothing](../notebooks/Spikes%20-%20Binning%20and%20smoothing%20spike%20trains.ipynb)
+- [ISIs and CVs](../notebooks/Spikes%20-%20Calculating%20ISIs%20and%20CVs.ipynb)
+- [Cross-correlograms](../notebooks/Spikes%20-%20Calculating%20cross-correlograms.ipynb)
 
 #### Evaluation
-- [CC and CCnorm](../notebooks/Evaluation%20-%20CC,%20normalized CC and SPE.ipynb)
+- [CC and CCnorm](../notebooks/Evaluation%20-%20CC,%20normalized%20CC%20and%20SPE.ipynb)
 
 #### Tuning
-- [OSI, DSI, F1F0 and more](../notebooks/Tuning%20-%20OSI,%20DSI,%20F1F0 and more.ipynb)
+- [OSI, DSI, F1F0 and more](../notebooks/Tuning%20-%20OSI,%20DSI,%20F1F0%20and%20more.ipynb)
 
 ## License
 
