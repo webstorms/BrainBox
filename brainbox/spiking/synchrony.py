@@ -22,7 +22,9 @@ def compute_synchronization_df(cross_covariance_matrix, dt=25):
     return pd.DataFrame(synchrony)
 
 
-def compute_synchronization(spike_trains, n_pairs, dt=8, bin_dt=25, normalize=True, from_idxs=None, to_idxs=None):
+def compute_synchronization(
+    spike_trains, n_pairs, dt=8, bin_dt=25, normalize=True, from_idxs=None, to_idxs=None
+):
     if from_idxs is None and to_idxs is None:
         from_idxs, to_idxs = _generate_pairs(spike_trains.shape[1], n_pairs)
     else:
@@ -68,7 +70,7 @@ def _generate_pairs_from_idxs(n_pairs, from_idxs, to_idxs):
     # Avoid sampling identical idxs for pairing
     for i in range(n_pairs):
         if sampled_from_idxs[i] == sampled_to_idxs[i]:
-            sampled_to_idxs[i] = to_idxs[(random_to_idxs[i]+1) % len(to_idxs)]
+            sampled_to_idxs[i] = to_idxs[(random_to_idxs[i] + 1) % len(to_idxs)]
 
     return sampled_from_idxs, sampled_to_idxs
 
