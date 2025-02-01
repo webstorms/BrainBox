@@ -40,6 +40,20 @@ The following notebooks contain example code showing how to use BrainBox for spe
 #### Tuning
 - [OSI, DSI, F1F0 and more](../notebooks/Tuning%20-%20OSI,%20DSI,%20F1F0%20and%20more.ipynb)
 
-## License
+## Citation
+If you use DevTorch in your work, please cite it as follows:
+```bibtex
+@software{brainbox2024,
+  author       = {Taylor, Luke},
+  title        = {BrainBox: Simplifying the life of a computational neuroscientist.
+},
+  month        = Feb,
+  year         = 2025,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.14787822},
+  url          = {https://doi.org/10.5281/zenodo.14787822}
+}
+```
 
+## License
 BrainBox has a MIT license, as found in the LICENSE file.
