@@ -10,6 +10,7 @@
     <img src="https://github.com/webstorms/BrainBox/actions/workflows/tests.yml/badge.svg">
 <img src="https://github.com/webstorms/BrainBox/actions/workflows/linting.yml/badge.svg">
   </a>
+<a href="https://doi.org/10.5281/zenodo.14787821"><img src="https://zenodo.org/badge/348096398.svg" alt="DOI"></a>
 </p>
 
 ## Installation
